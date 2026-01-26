@@ -1,0 +1,48 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: qr-auth-pg-cluster
+  namespace: pg-ns
+spec:
+  description: "PostgreSQL cluster for qr_auth application"
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.2
+  enableSuperuserAccess: true
+  instances: 3
+  startDelay: 300
+  primaryUpdateStrategy: unsupervised
+  postgresql:
+    pg_hba:
+      - host all all 10.48.0.0/20 md5
+  bootstrap:
+    initdb:
+      database: qr_auth
+  storage:
+    storageClass: premium-rwo
+    size: 5Gi
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "1000m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+  affinity:
+    enablePodAntiAffinity: true
+    tolerations:
+      - key: cnpg.io/cluster
+        effect: NoSchedule
+        value: qr-auth-pg-cluster
+        operator: Equal
+    additionalPodAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 1
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.component
+                  operator: In
+                  values:
+                    - "pg-cluster"
+            topologyKey: topology.kubernetes.io/zone
+  monitoring:
+    enablePodMonitor: true

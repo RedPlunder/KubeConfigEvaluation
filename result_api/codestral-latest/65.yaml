@@ -1,0 +1,5 @@
+wordpress:
+  plugins:
+    local:
+      enabled: true
+      path: /path/to/local/plugins

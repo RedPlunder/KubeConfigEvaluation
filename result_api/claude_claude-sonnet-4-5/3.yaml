@@ -1,0 +1,4 @@
+kind: ConfigMap
+metadata:
+  name: test2
+  namespace: my-namespace

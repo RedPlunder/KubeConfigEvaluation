@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: site-home
+  labels:
+    app: site-home
+spec:
+  restartPolicy: Never
+  volumes:
+  - name: v-site-home
+    emptyDir: {}
+  containers:
+  - name: site-web
+    image: site-home:1.0.0
+    ports:
+    - containerPort: 80
+    volumeMounts:
+    - name: v-site-home
+      mountPath: /usr/share/nginx/html/assets/quotalago
+  - name: site-cron
+    image: site-home-cron:1.0.0
+    volumeMounts:
+    - name: v-site-home
+      mountPath: /app/quotalago

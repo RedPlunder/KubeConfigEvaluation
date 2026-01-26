@@ -1,0 +1,19 @@
+- name: deploy_capability_docker_kubernetes
+  plan:
+    - get: bufferautomationsourcecode
+    - get: concoursesourcecode
+    - task: update_deploymentfile_git
+      file: concoursesourcecode/task/kubernetes_fileupdate_task_parameterized1.yaml
+      params:
+        BRANCH: "Dev"
+        SOURCE_CODE: "bufferautomationsourcecode"
+        
+    # Simplified Deployment Step
+    # This replaces the apply + wait + rollout status chain
+    - put: kubernetes-cluster-deployment
+      params:
+        kubectl: apply -f bufferautomationsourcecode/kubernetes/Dev/Deployment.yaml -n videoautomationcapabilities
+        # Wait up to 300s for pods to be ready
+        wait_until_ready: 300
+        # CRITICAL: Only check pods with this specific label
+        wait_until_ready_selector: "app=video-buffer-detect-app"

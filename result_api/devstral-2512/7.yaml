@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: django-api
+  template:
+    metadata:
+      labels:
+        app: django-api
+    spec:
+      containers:
+      - name: django-api
+        image: your-django-image
+        env:
+        - name: DJANGO_SETTINGS_MODULE
+          value: "your_project.settings"
+        - name: API_HOST
+          value: "www.my-api-url.com"
+        ports:
+        - containerPort: 8000

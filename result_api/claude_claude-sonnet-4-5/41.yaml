@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: emqx-service
+  namespace: default
+spec:
+  selector:
+    app: emqx
+  ports:
+  - name: websocket-tls
+    protocol: TCP
+    port: 8084
+    targetPort: 8084
+  type: ClusterIP

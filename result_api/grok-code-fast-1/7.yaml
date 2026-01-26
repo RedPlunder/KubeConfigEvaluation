@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-api-deployment
+  namespace: default
+spec:
+  replicas: 3  # Production-ready with multiple replicas for high availability
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+      - name: django-api
+        image: your-django-image:latest  # Replace with your actual Docker image
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DJANGO_SETTINGS_MODULE
+          value: "yourproject.settings"  # Replace with your Django settings module
+        - name: ALLOWED_HOSTS
+          value: "www.my-api-url.com,api-back.my-api-url.com,localhost,127.0.0.1"
+        - name: USE_X_FORWARDED_HOST
+          value: "True"
+        - name: SECURE_PROXY_SSL_HEADER
+          value: '("HTTP_X_FORWARDED_PROTO", "https")'
+        - name: PAGINATION_BASE_URL
+          value: "https://www.my-api-url.com"  # New env var for custom pagination base
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"  # Best practice: Set resource limits for production stability
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000  # Best practice: Run as non-root for security
+        livenessProbe:
+          httpGet:
+            path: /health/  # Replace with your actual health check endpoint
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health/  # Replace with your actual health check endpoint
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      securityContext:
+        fsGroup: 1000  # Best practice: Set fsGroup for volume permissions

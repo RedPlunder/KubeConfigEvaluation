@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: streaming-services-ingress-streaming
+  namespace: streaming-namespace
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    # Disable request buffering for true end-to-end streaming
+    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+    # You may still keep response buffering ON or tune it separately
+    nginx.ingress.kubernetes.io/proxy-buffering: "on"
+spec:
+  tls:
+    - hosts:
+        - streaming.example.com
+      secretName: streaming-tls-secret
+  rules:
+    - host: streaming.example.com
+      http:
+        paths:
+          - path: /stream
+            pathType: Prefix
+            backend:
+              service:
+                name: streaming-service-a
+                port:
+                  number: 80

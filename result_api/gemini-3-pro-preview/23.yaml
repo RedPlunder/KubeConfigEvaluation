@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  # The name usually includes the release/chart name (e.g., my-app-content-config)
+  name: my-app-content-config
+  annotations:
+    # This annotation instructs Helm to skip modifying this resource 
+    # during upgrades and skip deleting it during uninstalls.
+    "helm.sh/resource-policy": keep
+data:
+  content.properties: |
+    {
+      "Enabled": false,
+      "ApiEndpoint": "https://api.example.com"
+    }

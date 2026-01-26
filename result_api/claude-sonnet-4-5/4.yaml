@@ -1,0 +1,47 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: http://check-auth.default.svc.cluster.local:1221/review/request
+    nginx.ingress.kubernetes.io/auth-method: GET
+    nginx.ingress.kubernetes.io/auth-response-headers: Cookie
+    nginx.ingress.kubernetes.io/auth-snippet: |
+      # Only apply auth to specific paths
+      if ($request_uri !~ "^/(path1/loc1|path2/loc3)/") {
+        return 200;
+      }
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      # Add CORS headers only for restricted paths with Origin header
+      if ($request_uri ~ "^/(path1/loc1|path2/loc3)/") {
+        set $cors_match "1";
+      }
+      if ($http_origin != "") {
+        set $cors_match "${cors_match}+origin";
+      }
+      if ($cors_match = "1+origin") {
+        more_set_headers "Access-Control-Allow-Origin: $http_origin";
+        more_set_headers "Access-Control-Allow-Credentials: true";
+        more_set_headers "Vary: Origin";
+      }
+    nginx.ingress.kubernetes.io/server-snippet: |
+      # Custom error page for 403 from auth service
+      error_page 403 = @custom_403;
+      location @custom_403 {
+        default_type text/plain;
+        return 403 "Access denied!";
+      }
+  name: ingress-1
+  namespace: default
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: example.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: page
+            port:
+              number: 80
+        path: /
+        pathType: Prefix

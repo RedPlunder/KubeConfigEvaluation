@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ftp1-with-tty
+  labels:
+    app: ftp
+spec:
+  containers:
+  - name: ftp1
+    image: your-ftp-image:tag
+    stdin: true
+    tty: true
+    command: ["/bin/bash", "-c", "--"]
+    args: ["while true; do sleep 30; done;"]

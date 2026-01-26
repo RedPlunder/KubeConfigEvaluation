@@ -1,0 +1,22 @@
+# Second Ingress for paths without client certs
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-tool-ingress
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - app.example.com
+    secretName: app-tls-secret
+  rules:
+  - host: app.example.com
+    http:
+      paths:
+      - path: /tool
+        pathType: Prefix
+        backend:
+          service:
+            name: tool-service
+            port:
+              number: 80

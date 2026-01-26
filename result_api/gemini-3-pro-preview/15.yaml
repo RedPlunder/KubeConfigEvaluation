@@ -1,0 +1,27 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: my-apps
+  name: my-apps-qbrjf
+  namespace: test-systems
+spec:
+  host: www.test.gov.tw
+  path: /my-apps
+  
+  # Defines which Service Port to target. 
+  # This targets the "name: http" defined in Solution 1's Service ports.
+  port:
+    targetPort: http
+    
+  to:
+    kind: Service
+    name: my-apps
+    weight: 100
+    
+  wildcardPolicy: None
+  
+  # FIX: Added TLS configuration to allow HTTPS connection
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

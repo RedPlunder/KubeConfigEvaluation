@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: private-reg
+  labels:
+    app: private-reg
+spec:
+  restartPolicy: Always
+  containers:
+    - name: private-reg-container
+      image: registry.gitlab.example.com/your-group/your-image:latest
+      imagePullPolicy: IfNotPresent
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+        limits:
+          cpu: "500m"
+          memory: "512Mi"
+  imagePullSecrets:
+    - name: deploy-secret
+    - name: permanent-secret

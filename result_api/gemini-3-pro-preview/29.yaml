@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stateful-readiness-wrapper
+  labels:
+    app: wrapped-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wrapped-app
+  template:
+    metadata:
+      labels:
+        app: wrapped-app
+    spec:
+      containers:
+        - name: my-container
+          image: busybox:1.36 # Using busybox to demonstrate shell commands
+          # Simulating a server that listens on 8080
+          command: ["sh", "-c", "echo 'Starting...' && sleep 10 && echo 'Server Ready' && nc -lk -p 8080 -e echo -e 'HTTP/1.1 200 OK\\n\\n pong'"]
+          ports:
+            - containerPort: 8080
+          
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  # 1. Check if we already marked this as ready (Short-circuit)
+                  if [ -f /tmp/ready_marker ]; then
+                    exit 0
+                  fi
+
+                  # 2. If not marked, perform the actual "heavy" check
+                  # (Here checking if port 8080 is open)
+                  nc -z 127.0.0.1 8080
+
+                  # 3. Capture the result of the check
+                  RESULT=$?
+
+                  # 4. If success, create the marker file so future checks skip step 2
+                  if [ $RESULT -eq 0 ]; then
+                    touch /tmp/ready_marker
+                  fi
+
+                  # 5. Return the result to Kubernetes
+                  exit $RESULT
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 3

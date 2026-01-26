@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: file-reader-target
+  namespace: default
+  labels:
+    app: file-reader-target
+spec:
+  terminationGracePeriodSeconds: 30
+  containers:
+    - name: app
+      image: busybox:1.36
+      command: ["sh", "-c"]
+      args:
+        - |
+          mkdir -p /data && \
+          echo "Hello from inside the pod" > /data/target.txt && \
+          sleep 3600
+      volumeMounts:
+        - name: data
+          mountPath: /data
+  volumes:
+    - name: data
+      emptyDir: {}
+  restartPolicy: Always

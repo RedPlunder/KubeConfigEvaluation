@@ -1,0 +1,26 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: app-ingress
+  namespace: default
+  labels:
+    chart: app-1.1
+    component: app
+    hostname: app.client.com
+    release: app
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  rules:
+    - host: app.client.com
+      http:
+        paths:
+          - path: /app1/?(.*)
+            backend:
+              serviceName: app-service
+              servicePort: 8080
+  tls:
+    - hosts:
+        - app.client.com
+      secretName: app-prod

@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vod
+  labels:
+    app: vod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vod
+  template:
+    metadata:
+      labels:
+        app: vod
+    spec:
+      initContainers:
+      - name: glowroot-jar-init-container
+        image: "your-registry/aptm-image:latest"  # Replace with actual image
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+          runAsNonRoot: true
+          readOnlyRootFilesystem: true
+        imagePullPolicy: IfNotPresent
+        command: 
+        - sh
+        - -c
+        - |
+          cp /opt/tools/aptm/glowroot.jar /shared-aptm/
+          echo "Glowroot JAR copied successfully"
+          ls -la /shared-aptm/
+        volumeMounts:
+        - name: aptm-data
+          mountPath: /shared-aptm
+      
+      containers:
+      - name: vod
+        image: "your-registry/vod:latest"  # Replace with actual image
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+          runAsNonRoot: true
+          readOnlyRootFilesystem: true
+        command:
+        - sh
+        - -c
+        - -x
+        - |
+          echo "Copying aptm JAR."
+          cp /usr/local/tomcat/webapps/vod/WEB-INF/lib/hram-agent-0.13.jar /opt/tools/aptm/
+          
+          echo "Verifying copied files in /opt/tools/aptm:"
+          ls -la /opt/tools/aptm/
+          
+          echo "Starting Tomcat"
+          bash /mounted-config/start_tomcat.sh
+        args:
+        - "30000"
+        volumeMounts:
+        - name: aptm-data
+          mountPath: /opt/tools/aptm
+        - name: mounted-config
+          mountPath: /mounted-config
+        # Add other volume mounts as needed
+      
+      volumes:
+      - name: aptm-data
+        emptyDir: {}
+      - name: mounted-config
+        configMap:
+          name: tomcat-config  # Replace with your actual ConfigMap name
+      # Add other volumes as needed

@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-java-app-shell
+  labels:
+    app: test-java-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-java-app
+  template:
+    metadata:
+      labels:
+        app: test-java-app
+    spec:
+      containers:
+        - name: test-java-service
+          image: openjdk:17-slim # Example image
+          
+          # 1. We override the entrypoint to be a shell.
+          command: ["/bin/sh", "-c"]
+          
+          # 2. We pass the ENTIRE command string as one argument to the shell.
+          # The shell will expand the spaces correctly before calling java.
+          # In Helm, this would look like: args: ["java {{ .Values.ALL_JAVA_OPTS }} -jar java_j.jar"]
+          args: 
+            - "java -Xmx256m -XX:MetaspaceSize=64m -XX:+UseSerialGC -jar java_j.jar"
+            
+          resources:
+            limits:
+              memory: "512Mi"
+            requests:
+              memory: "256Mi"
+          ports:
+            - containerPort: 8080
+              name: http

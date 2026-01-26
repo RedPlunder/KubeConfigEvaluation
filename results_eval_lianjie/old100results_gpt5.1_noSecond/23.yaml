@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: test-ssl-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  tls:
+    - hosts:
+        - example.yourdomain.com
+      # This assumes tls-secret exists in the same namespace
+      # and the certificate has CN or SAN for example.yourdomain.com
+      secretName: tls-secret
+  ingressClassName: nginx
+  rules:
+    - host: example.yourdomain.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: demo-echo-service
+                port:
+                  number: 80

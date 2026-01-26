@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: default
+  labels:
+    app: checklister-frontend
+  annotations:
+    # OCI Load Balancer shape configuration
+    service.beta.kubernetes.io/oci-load-balancer-shape: "flexible"
+    service.beta.kubernetes.io/oci-load-balancer-internal: "false"
+    service.beta.kubernetes.io/oci-load-balancer-shape-flex-min: "2"
+    service.beta.kubernetes.io/oci-load-balancer-shape-flex-max: "8"
+
+    # OCI Load Balancer health check configuration
+    # NOTE: Ensure these keys exactly match the OCI CCM documentation for your version.
+    service.beta.kubernetes.io/oci-load-balancer-health-check-protocol: "HTTP"
+    # This must be the NodePort, not the container port, for instance-group style backends.
+    # After applying once, you can run `kubectl get svc frontend-service -o yaml`
+    # to see the allocated nodePort and then update this value accordingly.
+    service.beta.kubernetes.io/oci-load-balancer-health-check-port: "32080"
+    service.beta.kubernetes.io/oci-load-balancer-health-check-path: "/"
+spec:
+  type: LoadBalancer
+  selector:
+    app: checklister-frontend
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80          # External LB port
+      targetPort: 80    # Container port
+      nodePort: 32080   # Fixed NodePort used by the LB health check

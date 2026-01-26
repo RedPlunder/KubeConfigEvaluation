@@ -1,0 +1,16 @@
+# Expose Config server
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubernetes-learning-config-server
+  namespace: kubernetes-learning      # FIXED: Added namespace to match Deployment
+  labels:
+    app: kubernetes-learning-config-server
+spec:
+  type: ClusterIP
+  selector:
+    app: kubernetes-learning-config-server
+  ports:
+    - protocol: TCP
+      port: 8888                      # FIXED: Changed from 80 to 8888 to match client URI
+      targetPort: 8888

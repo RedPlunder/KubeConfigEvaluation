@@ -1,0 +1,55 @@
+argo-cd:
+  enabled: true
+  dex:
+    enabled: false
+  notifications:
+    enabled: false
+  applicationSet:
+    enabled: true
+  server:
+    extraArgs:
+      - --insecure
+    service:
+      type: NodePort
+      nodePortHttp: 32080
+  namespaceOverride: "argo-cd"
+
+argocd-apps:
+  enabled: true
+  applicationsets:
+    - name: core-applicationset
+      namespace: argo-cd
+      goTemplate: true
+      generators:
+        - git:
+            repoURL: https://mygitrepo.git
+            revision: HEAD
+            directories:
+              - path: kubernetes-deployments/core/*
+      template:
+        metadata:
+          name: '{{.path.basename}}'
+        spec:
+          project: default
+          source:
+            repoURL: https://mygitrepo.git
+            targetRevision: HEAD
+            path: "{{.path.path}}"
+            helm:
+              valueFiles:
+                - values.yaml
+          destination:
+            server: https://kubernetes.default.svc
+            namespace: "{{.path.basename}}"
+          syncPolicy:
+            syncOptions:
+              - CreateNamespace=true
+              - ApplyOutOfSyncOnly=true
+              - RespectIgnoreDifferences=true
+              - PruneLast=true
+            automated:
+              prune: false
+              selfHeal: true
+          revisionHistoryLimit: 5
+      syncPolicy:
+        preserveResourcesOnDeletion: true

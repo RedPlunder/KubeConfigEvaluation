@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../secrets
+  - ../service
+
+replacements:
+  - source:
+      kind: Secret
+      name: test-secret
+      fieldPath: metadata.name
+    targets:
+      - select:
+          kind: Deployment
+          name: service
+        fieldPaths:
+          - spec.template.spec.volumes.[name=placeholder-value].name
+          - spec.template.spec.containers.[name=service].volumeMounts.[name=placeholder-value].name

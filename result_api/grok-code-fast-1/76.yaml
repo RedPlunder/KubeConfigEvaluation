@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: restricted-access-pod-mounted
+  namespace: default
+spec:
+  containers:
+  - name: app-container
+    image: your-app-image:latest  # Image with internal permissions as needed
+    command: ["/bin/sh", "-c", "sleep 3600"]  # Example command; replace with your app
+    volumeMounts:
+    - name: dir1-volume
+      mountPath: /DIR1
+    securityContext:
+      allowPrivilegeEscalation: false
+      runAsNonRoot: true
+      runAsUser: 1001  # Non-root user ID
+      runAsGroup: 1001  # Primary group ID
+      supplementalGroups: [1002]  # Optional: Add other groups if user needs broader access
+  volumes:
+  - name: dir1-volume
+    persistentVolumeClaim:
+      claimName: your-pvc  # Replace with actual PVC; ensure PVC's volume has restrictive perms (e.g., via storage class or init)
+  securityContext:
+    fsGroup: 1001  # Sets group ownership of /DIR1 (mounted volume) to group1, enabling write for Group 1 members

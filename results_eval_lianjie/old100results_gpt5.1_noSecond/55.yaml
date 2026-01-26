@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: edgy-dragonfly-configmap
+data:
+  myvalue: "hello world"
+  drink: "coffee"
+  food: "PIZZA"
+  toppings: |-
+    - "Mushrooms"
+    - coffee
+    - "Cheese"
+    - coffee
+    - "Peppers"
+    - coffee
+    - "Onions"
+    - coffee

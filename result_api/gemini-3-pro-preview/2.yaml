@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: buffered-ingress
+  namespace: default
+  annotations:
+    # 1. Enable Request Buffering (Nginx stores full body before sending to pod)
+    nginx.ingress.kubernetes.io/proxy-request-buffering: "on"
+    
+    # 2. Allow large files
+    nginx.ingress.kubernetes.io/proxy-body-size: "600m"
+    
+    # 3. Performance Tuning: Client Body Buffer
+    # Default is often small (16k). Increasing this keeps smaller uploads in RAM 
+    # and reduces disk I/O latency on the Ingress controller itself.
+    # Note: Do not set larger than available RAM on Ingress Pods.
+    nginx.ingress.kubernetes.io/client-body-buffer-size: "50m"
+
+    # 4. Timeouts still needed for the ingress-to-client connection phase
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: fast-upload.example.com
+    http:
+      paths:
+      - path: /upload
+        pathType: Prefix
+        backend:
+          service:
+            name: service-a
+            port:
+              number: 80

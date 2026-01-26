@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: declare-exchange-script
+  namespace: reportportal  # Adjust to your namespace if different
+data:
+  declare_exchange.py: |
+    import pika
+    import os
+    import sys
+    
+    # Get environment variables
+    host = os.getenv('RABBITMQ_HOST')
+    port = int(os.getenv('RABBITMQ_PORT', 5672))
+    vhost = os.getenv('RABBITMQ_VHOST')
+    user = os.getenv('RABBITMQ_USER')
+    password = os.getenv('RABBITMQ_PASSWORD')
+    
+    if not all([host, vhost, user, password]):
+        print("Missing required environment variables")
+        sys.exit(1)
+    
+    credentials = pika.PlainCredentials(user, password)
+    parameters = pika.ConnectionParameters(host=host, port=port, virtual_host=vhost, credentials=credentials)
+    
+    try:
+        connection = pika.BlockingConnection(parameters)
+        channel = connection.channel()
+        # Declare the exchange as direct type (based on binding behavior)
+        channel.exchange_declare(exchange='analyzer-default', exchange_type='direct', durable=True)
+        print("Exchange 'analyzer-default' declared successfully in vhost '{}'".format(vhost))
+        connection.close()
+    except Exception as e:
+        print("Failed to declare exchange: {}".format(e))
+        sys.exit(1)

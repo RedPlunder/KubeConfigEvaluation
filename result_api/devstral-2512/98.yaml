@@ -1,0 +1,50 @@
+resources:
+- name: kubernetes-cluster-deployment
+  type: kubernetes
+  icon: kubernetes
+  source:
+    insecure_skip_tls_verify: false
+    kubeconfig: {{kubernetes-config}}
+
+jobs:
+- name: deploy_capability_docker_kubernetes
+  plan:
+    - get: bufferautomationsourcecode
+    - get: docker_hub_details_capability_development
+      passed: [build_deploy_hub]
+      trigger: true
+    - get: version
+    - get: concoursesourcecode
+    - task: update_deploymentfile_git
+      file: concoursesourcecode/task/kubernetes_fileupdate_task_parameterized1.yaml
+      params:
+        BRANCH: "Dev"
+        SOURCE_CODE: "bufferautomationsourcecode"
+    - put: kubernetes-cluster-deployment
+      params:
+        kubectl: config current-context
+        wait_until_ready: false
+    - put: kubernetes-cluster-deployment
+      params:
+        kubectl: get pods -l app=video-buffer-detect-app -n videoautomationcapabilities
+        wait_until_ready: false
+    - put: kubernetes-cluster-deployment
+      params:
+        kubectl: get pods -n videoautomationcapabilities --show-labels
+        wait_until_ready: false
+    - put: kubernetes-cluster-deployment
+      params:
+        kubectl: apply -f bufferautomationsourcecode/kubernetes/Dev/Deployment.yaml -n videoautomationcapabilities
+        wait_until_ready: false
+      ensure:
+        do:
+          - put: kubernetes-cluster-deployment
+            params:
+              kubectl: wait --for=condition=Ready pod -l app=video-buffer-detect-app -n videoautomationcapabilities --timeout=300s || true
+              wait_until_ready: false
+            ensure:
+              do:
+                - put: kubernetes-cluster-deployment
+                  params:
+                    kubectl: rollout status deployment/video-buffer-detect-app --timeout=300s
+                    wait_until_ready: false

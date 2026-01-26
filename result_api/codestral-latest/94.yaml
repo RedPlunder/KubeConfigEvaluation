@@ -1,0 +1,16 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: my-ingressroute
+  namespace: default
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`example.com`) && Path(`/`)
+      kind: Rule
+      services:
+        - name: my-service
+          port: 80
+      middlewares:
+        - name: retry-middleware

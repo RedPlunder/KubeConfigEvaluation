@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: apisix-gateway-service
+  namespace: apisix
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/name: apisix
+  ports:
+  - port: 80
+    targetPort: 8090

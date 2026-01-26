@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-with-selenium
+  namespace: default
+  labels:
+    app: app-with-selenium
+spec:
+  # Init container can optionally wait for Selenium if you expose it via a Service.
+  # For a pure sidecar pattern with localhost, you usually don't need this.
+  initContainers:
+    - name: wait-for-config
+      image: busybox:latest
+      imagePullPolicy: IfNotPresent
+      command:
+        - sh
+        - -c
+        - |
+          echo "Init container for config or other setup completed"
+  containers:
+    - name: application
+      image: your-registry/your-application-image:latest
+      imagePullPolicy: IfNotPresent
+      env:
+        - name: SELENIUM_REMOTE_URL
+          value: "http://localhost:4444/wd/hub"
+      ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "256Mi"
+        limits:
+          cpu: "500m"
+          memory: "512Mi"
+      volumeMounts:
+        - name: xxxxxx
+          readOnly: true
+          mountPath: "/etc/xxxxx"
+    - name: remote-chrome-webdriver
+      image: xxxxxxxxxx/selenium/standalone-chrome:4.23.1
+      imagePullPolicy: IfNotPresent
+      ports:
+        - name: webdriver
+          containerPort: 4444
+          protocol: TCP
+      env:
+        - name: "xxxxx_APPLICATION_CREDENTIALS"
+          value: "REDACTED_VALUE"
+      envFrom:
+        - secretRef:
+            name: xxxxxx
+      volumeMounts:
+        - name: xxxxxx
+          readOnly: true
+          mountPath: "/etc/xxxxx"
+      resources:
+        requests:
+          cpu: "500m"
+          memory: "1Gi"
+        limits:
+          cpu: "1"
+          memory: "2Gi"
+  volumes:
+    - name: xxxxxx
+      secret:
+        secretName: xxxxxx
+  restartPolicy: Always

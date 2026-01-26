@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: artemis-webconsole-broker1
+  namespace: artemis
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: broker1.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: broker1-webconsole-svc
+                port:
+                  number: 8080

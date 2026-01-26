@@ -1,0 +1,48 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: <release-name>
+  namespace: <namespace>
+  labels:
+    app: <release-name>
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    # CHANGE 1: Use server-snippet instead of configuration-snippet.
+    # This applies headers at the server level, avoiding conflicts with rewrite-target in the location block.
+    # CHANGE 2: Added missing semicolon ';' at the end of the first line.
+    # CHANGE 3: Corrected header name to 'Content-Security-Policy'.
+    nginx.ingress.kubernetes.io/server-snippet: |
+      more_set_headers "Content-Security-Policy: default-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.pendo.io https://*.storage.googleapis.com; img-src 'self' https://*.pendo.io data:; frame-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.pendo.io https://*.storage.googleapis.com blob: data:; object-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.pendo.io https://*.storage.googleapis.com blob: data:;";
+      more_set_headers "Cache-Control: no-store";
+    
+    # Existing annotations
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "false"
+    nginx.ingress.kubernetes.io/cors-allow-headers: Authorization, Content-Type
+    nginx.ingress.kubernetes.io/cors-allow-methods: GET, POST, PUT, DELETE, OPTIONS
+    nginx.ingress.kubernetes.io/cors-allow-origin: https://<host>,http://localhost:3000
+    nginx.ingress.kubernetes.io/cors-max-age: "3600"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: 64k
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.org/proxy-pass-headers: IDAM_USER,IDAM-USER
+    nginx.org/server-tokens: "False"
+spec:
+  ingressClassName: <ingressclass-name>
+  rules:
+  - host: <host>
+    http:
+      paths:
+      - path: /(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: <release-name>
+            port:
+              number: 80
+  tls:
+  - hosts:
+    - <host>
+    secretName: <secret-name>

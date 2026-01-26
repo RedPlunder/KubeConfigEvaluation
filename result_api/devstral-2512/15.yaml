@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-apps
+  namespace: test-systems
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-apps
+  template:
+    metadata:
+      labels:
+        app: my-apps
+    spec:
+      containers:
+      - name: my-apps
+        image: your-application-image
+        ports:
+        - name: http
+          containerPort: 8080
+        - name: actuator
+          containerPort: 5678
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10

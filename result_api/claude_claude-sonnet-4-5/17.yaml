@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: your-application
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: your-application
+  template:
+    metadata:
+      labels:
+        app: your-application
+    spec:
+      containers:
+        - name: your-application
+          image: your-application-image:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          # Your application container configuration
+          # resources, env, volumeMounts, etc.
+          
+        - name: remote-chrome-webdriver
+          image: selenium/standalone-chrome:4.23.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: selenium
+              containerPort: 4444
+              protocol: TCP
+          env:
+            - name: SE_NODE_MAX_SESSIONS
+              value: "3"
+            - name: SE_NODE_SESSION_TIMEOUT
+              value: "300"
+          livenessProbe:
+            httpGet:
+              path: /wd/hub/status
+              port: 4444
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /wd/hub/status
+              port: 4444
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 2Gi

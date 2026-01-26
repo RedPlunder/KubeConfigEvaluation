@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: output-all
+  namespace: my-namespace
+spec:
+  project: my-project
+  source:
+    repoURL: https://gitlab.com/gitlab/repo.git
+    targetRevision: HEAD
+    # Root of all manifests; Argo CD will recurse into subdirectories
+    path: output
+  destination:
+    name: in-cluster
+    namespace: my-namespace
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

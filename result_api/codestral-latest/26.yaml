@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: auth0-report-generator
+spec:
+  schedule: "0 0 * * *"  # Adjust to your schedule
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: report-generator
+            image: your-auth0-report-image:latest
+            command: ["/home/cronrun/start.sh"]
+            args: ["tenant1", "legacy-db"]
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 1000  # Match your non-root user
+          restartPolicy: OnFailure

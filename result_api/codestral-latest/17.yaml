@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-app-with-selenium
+spec:
+  containers:
+    - name: my-app
+      image: my-app-image
+      ports:
+        - containerPort: 8080
+    - name: remote-chrome-webdriver
+      image: selenium/standalone-chrome:4.23.1
+      ports:
+        - containerPort: 4444
+      env:
+        - name: SE_NODE_MAX_SESSIONS
+          value: "1"
+        - name: SE_NODE_OVERRIDE_MAX_SESSIONS
+          value: "true"
+  initContainers:
+    - name: wait-for-chrome
+      image: busybox:latest
+      command: ['sh', '-c', 'until curl -f http://remote-chrome-webdriver:4444/wd/hub/status; do echo "Waiting for remote-chrome-webdriver..."; sleep 5; done;']

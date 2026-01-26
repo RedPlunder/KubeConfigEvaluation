@@ -1,0 +1,29 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: eks-learning-ingress
+  namespace: production
+  labels:
+    app: eks-learning-ingress
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/certificate-arn: arn878ef678df
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/actions.ssl-redirect: >
+      {"type": "redirect", "redirectConfig": {"protocol": "HTTPS", "port": "443", "statusCode": "HTTP_301"}}
+spec:
+  rules:
+    - host: www.myhost.in
+      http:
+        paths:
+          # HTTP listener rule: redirect all HTTP to HTTPS
+          - path: /*
+            backend:
+              serviceName: ssl-redirect
+              servicePort: use-annotation
+          # HTTPS listener rule: send HTTPS traffic to the service
+          - path: /*
+            backend:
+              serviceName: eks-learning-service
+              servicePort: 80

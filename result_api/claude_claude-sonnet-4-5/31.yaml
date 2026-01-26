@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-ws-ingress
+  namespace: my-test
+  annotations:
+    nginx.ingress.kubernetes.io/websocket-services: "my-ws-backend"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    cert-manager.io/cluster-issuer: letsencrypt-prod-nginx
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: ws-my-test.myhost.com
+      http:
+        paths:
+          - path: /socket.io
+            pathType: Prefix
+            backend:
+              service:
+                name: my-ws-backend
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - ws-my-test.myhost.com
+      secretName: ws-my-test-cert

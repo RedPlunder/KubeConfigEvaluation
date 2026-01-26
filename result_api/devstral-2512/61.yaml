@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vite-react-config
+data:
+  config.json: |
+    {
+      "VITE_APP_CLIENT_ID": "your-client-id",
+      "VITE_APP_AUTHORITY": "your-authority",
+      "VITE_APP_REDIRECT_URI": "your-redirect-uri"
+    }

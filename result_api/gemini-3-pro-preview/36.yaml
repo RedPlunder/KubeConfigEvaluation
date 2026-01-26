@@ -1,0 +1,26 @@
+# 3. Kubernetes Ingress to Expose the JobSink
+# Identify the service name: By default, Knative creates a service matching the JobSink name 
+# or suffixed with '-kn-sink'. Check 'kubectl get svc -n knative-jobs' if connection fails.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jobsink-ingress
+  namespace: knative-jobs
+  annotations:
+    # Adjust annotation based on your Ingress Controller (e.g., nginx, contour, istio)
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    # IMPORTANT: You must map this host in your /etc/hosts or DNS to your Ingress LoadBalancer IP
+    - host: jobsink.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                # The Service name usually matches the JobSink name in recent Knative versions
+                name: external-trigger-job
+                port:
+                  number: 80

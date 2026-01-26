@@ -1,0 +1,13 @@
+externalAccess:
+  enabled: true
+  service:
+    type: LoadBalancer
+    ports:
+      external: 9094
+  autoDiscovery:
+    enabled: true
+  # Add these configurations for proper external access
+  domain: localhost
+  brokerService:
+    annotations:
+      external-dns.alpha.kubernetes.io/hostname: kafka.localhost

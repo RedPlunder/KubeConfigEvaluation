@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-deployment
+  labels:
+    app: postgres
+spec:
+  serviceName: "postgres-service"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      initContainers:
+      - name: create-db
+        image: postgres:17.4
+        command: ['sh', '-c', 'until pg_isready -h postgres-service -p 5432; do sleep 2; done && psql -h postgres-service -U $POSTGRES_USER -d postgres -c "CREATE DATABASE $POSTGRES_DB" || true']
+        env:
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                name: qr-auth-secret
+                key: DB_USER
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: qr-auth-secret
+                key: DB_PASSWORD
+          - name: POSTGRES_DB
+            value: qr_auth
+      containers:
+      - name: postgres
+        image: postgres:17.4
+        env:
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: qr-auth-secret
+                key: DB_PASSWORD
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                name: qr-auth-secret
+                key: DB_USER
+          - name: POSTGRES_DB
+            value: qr_auth
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "1000m"
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 5Gi

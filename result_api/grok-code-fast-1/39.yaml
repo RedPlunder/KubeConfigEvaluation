@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: broker-1-webconsole-svc
+  namespace: default  # Replace with your namespace
+spec:
+  selector:
+    app: artemis-broker
+    broker-instance: broker-1  # Adjust selector to match your Artemis operator labels
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+      nodePort: 30081  # Unique NodePort for broker 1
+  type: NodePort

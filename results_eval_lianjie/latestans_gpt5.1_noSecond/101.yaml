@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-dns
+  namespace: default
+  labels:
+    app.kubernetes.io/name: external-dns
+    app.kubernetes.io/instance: external-dns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: external-dns
+      app.kubernetes.io/instance: external-dns
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: external-dns
+        app.kubernetes.io/instance: external-dns
+    spec:
+      serviceAccountName: external-dns
+      containers:
+        - name: external-dns
+          image: registry.k8s.io/external-dns/external-dns:v0.14.0
+          args:
+            # Source: watch ingresses only (you can add "service" if needed)
+            - --source=ingress
+
+            # Provider: Route53
+            - --provider=aws
+
+            # Limit to your hosted zone / domain
+            # Replace with your actual domain and/or hosted zone ID
+            - --domain-filter=domain.com
+            - --aws-zone-type=public
+
+            # Policy:
+            # "sync" will ensure records exactly match desired state (creates/updates/deletes).
+            # If you want to avoid deletes, use "upsert-only".
+            - --policy=sync
+
+            # Registry: use TXT records to track ownership
+            - --registry=txt
+
+            # Stable owner ID so ExternalDNS recognizes its own records
+            - --txt-owner-id=eks-staging-cluster
+
+            # Optional but recommended: prefix for TXT records to avoid clashes
+            - --txt-prefix=external-dns-
+
+            # Only manage records it created (safer when multiple tools touch Route53)
+            - --managed-record-types=A,TXT,CNAME
+
+            # Interval between syncs (default 1m). You can increase to reduce churn.
+            - --interval=2m
+
+            # Optional: filter by ingress class if you only want ALB ingresses
+            - --ingress-class=alb
+
+            # Optional: log level for debugging
+            - --log-level=debug
+
+          env:
+            # Use IAM role for service account in production; this is only needed
+            # if you rely on AWS credentials via env vars.
+            - name: AWS_REGION
+              value: us-east-1
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"

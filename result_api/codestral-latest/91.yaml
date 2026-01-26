@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: python-precise-memory-control
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: python-precise-memory-control
+  template:
+    metadata:
+      labels:
+        app: python-precise-memory-control
+    spec:
+      containers:
+      - name: python-app
+        image: python:3.10-slim
+        command: ["python3", "-c", "import resource; limit = 450 * 1024 * 1024; resource.setrlimit(resource.RLIMIT_AS, (limit, limit)); print(f'Memory limit set to {limit} bytes'); bytearray(400 * 1024 * 1024)"]
+        resources:
+          limits:
+            memory: "500Mi"
+          requests:
+            memory: "250Mi"
+        securityContext:
+          oomScoreAdj: -999  # Prevent OOM killer from killing this container

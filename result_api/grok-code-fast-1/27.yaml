@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aspnet-app
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aspnet-app
+  template:
+    metadata:
+      labels:
+        app: aspnet-app
+    spec:
+      containers:
+      - name: aspnet-app
+        image: your-aspnet-image:latest  # Replace with your actual ASP.NET Core image
+        ports:
+        - containerPort: 443
+          protocol: TCP
+        - containerPort: 80
+          protocol: TCP
+        env:
+        - name: ASPNETCORE_URLS
+          value: "https://+:443;http://+:80"
+        - name: ASPNETCORE_ENVIRONMENT
+          value: "Development"
+        volumeMounts:
+        - name: user-secrets-home
+          mountPath: /home/app/.microsoft/usersecrets
+          readOnly: true
+        - name: user-secrets-root
+          mountPath: /root/.microsoft/usersecrets
+          readOnly: true
+        - name: https-home
+          mountPath: /home/app/.aspnet/https
+          readOnly: true
+        - name: https-root
+          mountPath: /root/.aspnet/https
+          readOnly: true
+      volumes:
+      - name: user-secrets-home
+        hostPath:
+          path: "/mnt/c/Users/%USERNAME%/AppData/Roaming/Microsoft/UserSecrets"  # Adjust for your Windows %APPDATA% path; this is WSL/Linux equivalent
+          type: DirectoryOrCreate
+      - name: user-secrets-root
+        hostPath:
+          path: "/mnt/c/Users/%USERNAME%/AppData/Roaming/Microsoft/UserSecrets"  # Same as above
+          type: DirectoryOrCreate
+      - name: https-home
+        hostPath:
+          path: "/mnt/c/Users/%USERNAME%/AppData/Roaming/ASP.NET/Https"  # Adjust for your Windows %APPDATA% path; this is WSL/Linux equivalent
+          type: DirectoryOrCreate
+      - name: https-root
+        hostPath:
+          path: "/mnt/c/Users/%USERNAME%/AppData/Roaming/ASP.NET/Https"  # Same as above
+          type: DirectoryOrCreate

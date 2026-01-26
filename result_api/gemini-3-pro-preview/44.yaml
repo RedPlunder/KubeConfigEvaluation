@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-deployment-http
+  labels:
+    app: my-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+        - name: my-app
+          image: my-app-image:latest
+          ports:
+            - containerPort: 8080
+          startupProbe:
+            httpGet:
+              path: /v1/health
+              port: 8080
+              # Optional: Add headers if required
+              # httpHeaders:
+              # - name: Custom-Header
+              #   value: Awesome
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 10
+            # Keeping the safer threshold buffer (4 minutes)
+            failureThreshold: 24

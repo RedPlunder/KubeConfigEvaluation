@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: taxiq-cronjob-reminder
+  annotations:
+    cloud.google.com/neg: '{"ingress": true}'
+    cloud.google.com/backend-config: '{"default": "taxiq-healthconfig"}'
+spec:
+  schedule: "31 4 * * *"
+  timeZone: "Europe/Berlin"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: taxiq-stage-gke
+          initContainers:
+            - image: gcr.io/google.com/cloudsdktool/cloud-sdk:326.0.0-alpine
+              name: workload-identity-initcontainer
+              command:
+              - '/bin/bash'
+              - '-c'
+              - "curl -s -H 'Metadata-Flavor: Google' 'http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token' --retry 30 --retry-connrefused --retry-max-time 30 > /dev/null || exit 1"
+            - image: busybox:1.36
+              name: wait-for-proxy
+              command:
+              - 'sh'
+              - '-c'
+              - |
+                echo "Waiting for cloud-sql-proxy to be ready on port 5432..."
+                until nc -z 127.0.0.1 5432; do
+                  echo "Proxy not ready yet, sleeping for 2 seconds..."
+                  sleep 2
+                done
+                echo "Proxy is ready!"
+          containers:
+          - name: cloud-sql-proxy
+            image: gcr.io/cloudsql-docker/gce-proxy:1.33.5
+            command:
+              - "/cloud_sql_proxy"
+              - "-instances=taxiq-stage-app:europe-west3:taxiq-stage=tcp:5432"
+            securityContext:
+              runAsNonRoot: true
+          - name: taxiq-cronjob-reminder
+            image: europe-west3-docker.pkg.dev/brantpoint-artifacts/taxiq/cronjob-reminder:beta09.7
+            env:
+              - name: PGURL
+                valueFrom:
+                  secretKeyRef:
+                    name: secrets
+                    key: PGURL
+          restartPolicy: Never

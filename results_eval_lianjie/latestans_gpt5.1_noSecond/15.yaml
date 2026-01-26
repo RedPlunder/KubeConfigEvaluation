@@ -1,0 +1,17 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: my-apps
+  namespace: test-systems
+  labels:
+    app: my-apps
+spec:
+  host: www.test.gov.tw
+  path: /my-apps
+  to:
+    kind: Service
+    name: my-apps
+    weight: 100
+  port:
+    targetPort: http
+  wildcardPolicy: None

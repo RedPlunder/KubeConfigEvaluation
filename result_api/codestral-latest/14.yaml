@@ -1,0 +1,52 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: build-image
+  namespace: argo-workflows
+spec:
+  serviceAccountName: argo-workflow
+  entrypoint: build-and-deploy-env3
+  # ... (previous parameters and volumes remain the same)
+
+  templates:
+    # ... (previous templates remain the same until kaniko-build-template)
+
+    - name: kaniko-build-template
+      inputs:
+        parameters:
+          - name: name
+          - name: image_tag
+          - name: ecr_url
+          - name: ecr_repo
+          - name: path_inside_repo
+      initContainers:
+        - name: verify-files
+          image: alpine:latest
+          command: [sh, -c]
+          args:
+            - |
+              echo "Verifying files in /workspace/application-{{inputs.parameters.name}}/{{inputs.parameters.path_inside_repo}}"
+              ls -la /workspace/application-{{inputs.parameters.name}}/{{inputs.parameters.path_inside_repo}}
+              if [ ! -f "/workspace/application-{{inputs.parameters.name}}/{{inputs.parameters.path_inside_repo}}/Dockerfile" ]; then
+                echo "Dockerfile not found in expected location"
+                exit 1
+              fi
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+      container:
+        image: gcr.io/kaniko-project/executor:latest
+        command:
+          - /kaniko/executor
+        args:
+          - --context=dir:///workspace/application-{{inputs.parameters.name}}/{{inputs.parameters.path_inside_repo}}
+          - --dockerfile=/workspace/application-{{inputs.parameters.name}}/{{inputs.parameters.path_inside_repo}}/Dockerfile
+          - --destination={{inputs.parameters.ecr_url}}/{{inputs.parameters.ecr_repo}}:{{inputs.parameters.image_tag}}
+          - --cache=true
+          - --verbosity=debug
+        env:
+          - name: AWS_REGION
+            value: "{{workflow.parameters.aws_region}}"
+        volumeMounts:
+          - name: workspace
+            mountPath: /workspace

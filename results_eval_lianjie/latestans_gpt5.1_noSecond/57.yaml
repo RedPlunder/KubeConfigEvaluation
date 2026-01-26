@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webtest-deployment
+  namespace: default
+  labels:
+    app: webtest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webtest
+  template:
+    metadata:
+      labels:
+        app: webtest
+    spec:
+      containers:
+        - name: webtest
+          image: k3d-registry.localhost:5000/webtest@sha256:45b23dee08af5e43a7fea6c4cf9c25ccf269ee113168c19722f87876677c5cb2
+          # imagePullPolicy defaults to IfNotPresent for digests
+          ports:
+            - containerPort: 8080

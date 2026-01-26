@@ -1,0 +1,92 @@
+# Complete values.yaml for Bitnami WordPress Helm chart with offline plugin installation
+apiVersion: v2  # This is Helm chart metadata, not Kubernetes API
+name: wordpress
+description: A Helm chart for WordPress with offline plugins
+version: 1.0.0
+
+# Bitnami WordPress configuration
+wordpressUsername: admin
+wordpressPassword: changeme  # Change in production; use secrets for security
+wordpressEmail: user@example.com
+wordpressFirstName: FirstName
+wordpressLastName: LastName
+wordpressBlogName: "WordPress Blog"
+
+# MariaDB configuration
+mariadb:
+  enabled: true
+  auth:
+    rootPassword: changeme  # Change in production
+    database: bitnami_wordpress
+    username: bn_wordpress
+    password: changeme  # Change in production
+
+# Do not specify wordpressPlugins if using local zips; handle via extraInitContainer below
+
+# Extra volumes to mount the local plugins directory (use hostPath for local access)
+extraVolumes:
+  - name: plugins-volume
+    hostPath:
+      path: /host/path/to/plugins  # Replace with your actual local directory path containing .zip files
+      type: Directory
+
+# Extra volume mounts for the init container
+extraVolumeMounts:
+  - name: plugins-volume
+    mountPath: /mnt/plugins  # Mount point inside the container
+
+# Extra init container to unzip plugins from the mounted directory
+extraInitContainers:
+  - name: install-local-plugins
+    image: busybox:latest  # Lightweight image for unzipping
+    command:
+      - /bin/sh
+      - -c
+      - |
+        for zip in /mnt/plugins/*.zip; do
+          if [ -f "$zip" ]; then
+            unzip -o "$zip" -d /bitnami/wordpress/wp-content/plugins/
+          fi
+        done
+    volumeMounts:
+      - name: plugins-volume
+        mountPath: /mnt/plugins
+    securityContext:
+      runAsUser: 1001  # Match WordPress container user for file permissions
+      runAsGroup: 1001
+
+# Additional production-ready settings
+persistence:
+  enabled: true
+  size: 10Gi
+  accessModes:
+    - ReadWriteOnce
+
+service:
+  type: ClusterIP  # Use LoadBalancer or Ingress in production
+
+ingress:
+  enabled: true
+  hostname: wordpress.example.com  # Replace with your domain
+  tls: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod  # Example for TLS
+
+# Security best practices
+securityContext:
+  enabled: true
+  fsGroup: 1001
+  runAsUser: 1001
+
+# Resource limits for production
+resources:
+  requests:
+    memory: 256Mi
+    cpu: 250m
+  limits:
+    memory: 512Mi
+    cpu: 500m
+
+# Other defaults (keep as needed for your setup)
+allowOverrideNone: false

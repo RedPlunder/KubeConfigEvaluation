@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment-envfile
+  labels:
+    app: frontend-envfile
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend-envfile
+  template:
+    metadata:
+      labels:
+        app: frontend-envfile
+    spec:
+      initContainers:
+        - name: generate-env-js
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              cat <<'EOF' > /env/env.js
+              window.env = { "API_URL": "http://ip:port" }
+              EOF
+          volumeMounts:
+            - name: env-js
+              mountPath: /env
+      containers:
+        - name: frontend
+          image: nginx:1.25-alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: env-js
+              mountPath: /usr/share/nginx/html/env.js
+              subPath: env.js
+      volumes:
+        - name: env-js
+          emptyDir: {}

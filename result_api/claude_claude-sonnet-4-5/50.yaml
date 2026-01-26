@@ -1,0 +1,80 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: amq-artemis
+  labels:
+    app.kubernetes.io/component: Ingress
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: hidden
+    external-dns.alpha.kubernetes.io/ingress-hostname-source: annotation-only
+    cert-manager.io/cluster-issuer: hidden
+    cert-manager.io/duration: 2160h
+    cert-manager.io/renew-before: 720h
+    # Connection settings
+    nginx.ingress.kubernetes.io/keepalive_timeout: "1200"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-body-size: "250m"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "4"
+    nginx.ingress.kubernetes.io/proxy-buffering: "on"
+    # Protocol and SSL
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # Session affinity
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-name: "amq-artemis"
+    nginx.ingress.kubernetes.io/session-cookie-samesite: "Lax"
+    nginx.ingress.kubernetes.io/session-cookie-secure: "true"
+    nginx.ingress.kubernetes.io/session-cookie-path: "/"
+    # CORS configuration
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://hidden"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS, DELETE"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization,X-Requested-With,Accept,Origin"
+    # WebSocket support (critical for Jolokia)
+    nginx.ingress.kubernetes.io/websocket-services: "amq-artemis"
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    # Proper header forwarding
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_busy_buffers_size 256k;
+      client_body_buffer_size 10m;
+      send_timeout 300;
+      # WebSocket upgrade headers
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+      # Proper proxy headers for Hawtio
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_set_header X-Forwarded-Host $host;
+      proxy_set_header X-Forwarded-Port $server_port;
+      # Disable buffering for streaming responses
+      proxy_buffering off;
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - hidden
+      secretName: artemis-fqdn-cert
+  rules:
+    - host: hidden
+      http:
+        paths:
+        - path: /console
+          pathType: Prefix
+          backend:
+            service:
+              name: amq-artemis
+              port:
+                number: 8161
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: amq-artemis
+              port:
+                number: 8161

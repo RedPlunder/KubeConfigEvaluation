@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: srsran-cu-du
+spec:
+  containers:
+  - name: srsran-cu-du
+    image: your-image
+    lifecycle:
+      postStart:
+        exec:
+          command:
+          - curl
+          - -H
+          - Content-Type: application/json
+          - -d
+          - '{ "restarted": true }'
+          - -X
+          - POST
+          - http://localhost:5000/restarted

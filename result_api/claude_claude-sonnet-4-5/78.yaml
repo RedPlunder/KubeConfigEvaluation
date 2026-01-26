@@ -1,0 +1,9 @@
+# File: kibana-values.yaml
+image: "abc.xyz.com/bitnami/kibana"
+imageTag: "8-debian-12"
+imagePullPolicy: "IfNotPresent"
+
+imagePullSecrets:
+  - name: nexus-image-pull-secret
+
+elasticsearchHosts: "http://elasticsearch-master:9200"

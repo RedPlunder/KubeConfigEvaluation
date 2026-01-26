@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aspnet-app
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aspnet-app
+  template:
+    metadata:
+      labels:
+        app: aspnet-app
+    spec:
+      containers:
+        - name: aspnet-app
+          image: your-registry/your-aspnet-image:latest
+          ports:
+            - containerPort: 80
+            - containerPort: 443
+          volumeMounts:
+            # User secrets for non-root user
+            - name: usersecrets-home
+              mountPath: /home/app/.microsoft/usersecrets
+              readOnly: true
+            # User secrets for root user
+            - name: usersecrets-root
+              mountPath: /root/.microsoft/usersecrets
+              readOnly: true
+            # HTTPS dev certs for non-root user
+            - name: https-home
+              mountPath: /home/app/.aspnet/https
+              readOnly: true
+            # HTTPS dev certs for root user
+            - name: https-root
+              mountPath: /root/.aspnet/https
+              readOnly: true
+      volumes:
+        # Adjust these hostPath paths to match your actual Windows APPDATA
+        - name: usersecrets-home
+          hostPath:
+            path: /run/desktop/mnt/host/c/Users/YourUser/AppData/Roaming/Microsoft/UserSecrets
+            type: Directory
+        - name: usersecrets-root
+          hostPath:
+            path: /run/desktop/mnt/host/c/Users/YourUser/AppData/Roaming/Microsoft/UserSecrets
+            type: Directory
+        - name: https-home
+          hostPath:
+            path: /run/desktop/mnt/host/c/Users/YourUser/AppData/Roaming/ASP.NET/Https
+            type: Directory
+        - name: https-root
+          hostPath:
+            path: /run/desktop/mnt/host/c/Users/YourUser/AppData/Roaming/ASP.NET/Https
+            type: Directory

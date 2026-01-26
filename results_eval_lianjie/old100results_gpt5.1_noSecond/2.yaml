@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-configuration
+  namespace: ingress-nginx
+  labels:
+    app: ingress-nginx
+data:
+  # Timeouts
+  proxy-connect-timeout: "15"
+  proxy-read-timeout: "600"
+  proxy-send-timeout: "600"
+
+  # Global max body size for all ingresses
+  # This is translated by ingress-nginx into `client_max_body_size`
+  proxy-body-size: "50m"
+
+  # Security / headers
+  hsts-include-subdomains: "false"
+
+  # Hash bucket size tuning
+  server-name-hash-bucket-size: "256"

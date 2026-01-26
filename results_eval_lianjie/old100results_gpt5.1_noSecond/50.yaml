@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-scheduleset-etl-reporting
+  namespace: my-ss-schedules
+  labels:
+    app: my-schedule-set
+    component: etl-reporting
+spec:
+  containers:
+    - name: etl-reporting
+      image: registry.k8s.io/busybox:1.27.2
+      command: ["/bin/sh", "-c", "env && sleep 3600"]
+      env:
+        - name: CONF_ENV
+          value: $(conf_env)
+      envFrom:
+        - configMapRef:
+            name: my-schedule-set-props
+  restartPolicy: Always

@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-web
+  labels:
+    app: myapp-web
+    chart: myapp-sandbox-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myapp-web
+  template:
+    metadata:
+      labels:
+        app: myapp-web
+        chart: myapp-sandbox-dev
+    spec:
+      containers:
+        - name: myapp-web
+          image: myapp.io/myapp-web:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SOME_VAR
+              value: "hello"
+      imagePullSecrets:
+        - name: myregistry

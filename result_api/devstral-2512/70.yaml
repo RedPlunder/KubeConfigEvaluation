@@ -1,0 +1,3 @@
+spring:
+  kafka:
+    bootstrap-servers: kafka-svc:9094  # Using the external port

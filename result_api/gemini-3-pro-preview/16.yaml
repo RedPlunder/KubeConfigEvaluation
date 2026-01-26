@@ -1,0 +1,15 @@
+# 2. The Service (The Load Balancer & Internal Route)
+apiVersion: v1
+kind: Service
+metadata:
+  name: java-rest-lb
+  namespace: java-rest-demo
+spec:
+  # 'LoadBalancer' asks your cloud provider (AWS/Azure) for a Public IP
+  type: LoadBalancer 
+  selector:
+    app: java-rest-service # Must match the Deployment labels above
+  ports:
+  - protocol: TCP
+    port: 80       # The port clients use (standard HTTP)
+    targetPort: 8080 # The port the Pod listens on

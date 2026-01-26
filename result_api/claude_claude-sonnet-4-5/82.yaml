@@ -1,0 +1,15 @@
+replicaCount: 3
+
+env:
+  APP_ENV: "production"
+  LOG_LEVEL: "warn"
+
+secrets:
+  secretPassword:
+    enabled: true
+    name: prod-app-secrets
+    key: password
+  secretApiKey:
+    enabled: true
+    name: prod-app-secrets
+    key: api-key

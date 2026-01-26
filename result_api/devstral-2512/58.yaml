@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-java-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-java-service
+  template:
+    metadata:
+      labels:
+        app: test-java-service
+    spec:
+      containers:
+      - name: test-java-service
+        image: your-java-image
+        env:
+        - name: JAVA_TOOL_OPTIONS
+          value: "-XX:+UseSerialGC -Xmx256m -XX:MetaspaceSize=64m"
+        command:
+          - java
+        args:
+          - -jar
+          - java_j.jar

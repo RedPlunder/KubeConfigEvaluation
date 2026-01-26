@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubernetes-learning-app
+  labels:
+    app: kubernetes-learning-app
+spec:
+  type: ClusterIP
+  selector:
+    app: kubernetes-learning-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8441

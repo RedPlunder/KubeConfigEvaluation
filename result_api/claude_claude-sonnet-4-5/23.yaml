@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-app-content-config
+  labels:
+    app: my-app
+data:
+  content.properties: |
+    {
+      "Enabled": true,
+      "ApiEndpoint": "https://api.example.com"
+    }

@@ -1,0 +1,42 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-protected-path2
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/auth-snippet: |
+      location = /_auth {
+        internal;
+        proxy_pass http://check-auth.default.svc.cluster.local:1221/review/request;
+        proxy_pass_request_body off;
+        proxy_set_header Content-Length "";
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Original-URI $request_uri;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Cookie $http_cookie;
+        proxy_intercept_errors on;
+        error_page 403 = @denied;
+      }
+      location @denied {
+        return 403 "Access denied!";
+        add_header Content-Type text/plain;
+      }
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      if ($http_origin) {
+        more_set_headers "Access-Control-Allow-Origin: $http_origin";
+        more_set_headers "Access-Control-Allow-Credentials: true";
+        more_set_headers "Vary: Origin";
+      }
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: example.com
+    http:
+      paths:
+      - path: /path2/loc3
+        pathType: Prefix
+        backend:
+          service:
+            name: page
+            port:
+              number: 80

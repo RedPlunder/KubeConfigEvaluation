@@ -1,0 +1,16 @@
+grafana:
+  grafana.ini:
+    smtp:
+      enabled: true
+      host: smtp.sendgrid.net:587
+      user: apikey
+      password: "/etc/secrets/smtp/password"
+      from_address: "my-from-address"
+      from_name: Grafana
+      skip_verify: false
+  extraSecretMounts:
+    - name: grafana-secrets
+      mountPath: /etc/secrets/smtp
+      subPath: ""
+      secretName: grafana-secrets
+      readOnly: true

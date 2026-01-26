@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-{{ .Values.global.branch }}
+  namespace: {{ default .Release.Namespace .Values.global.namespace }}
+spec:
+  replicas: {{ .Values.backend.replicas }}
+  selector:
+    matchLabels:
+      app: backend-{{ .Values.global.branch }}
+  template:
+    metadata:
+      labels:
+        app: backend-{{ .Values.global.branch }}
+    spec:
+      containers:
+      - name: backend
+        image: "{{ .Values.backend.repository }}:{{ .Values.global.branch }}"
+        ports:
+        - containerPort: {{ .Values.backend.port }}
+        envFrom:
+        - configMapRef:
+            name: backend-config-{{ .Values.global.branch }}

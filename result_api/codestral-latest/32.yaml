@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: penpot-backend
+  namespace: penpot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: penpot-backend
+  template:
+    metadata:
+      labels:
+        app: penpot-backend
+    spec:
+      containers:
+        - name: penpot-backend
+          image: penpotapp/backend:latest
+          env:
+            - name: PENPOT_PUBLIC_URI
+              value: http://penpot-frontend
+            - name: PENPOT_DATABASE_URI
+              value: postgresql://penpot:penpot@postgres:5432/penpot
+            - name: PENPOT_REDIS_URI
+              value: redis://redis:6379
+          ports:
+            - containerPort: 6060
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 6060
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 6060
+            initialDelaySeconds: 60
+            periodSeconds: 20

@@ -1,0 +1,16 @@
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: ${NAME}
+  namespace: ${NAMESPACE}
+spec:
+  exporter:
+    endpoint: http://${COLLECTOR_SERVICE}.${COLLECTOR_NAMESPACE}.svc.cluster.local:4318
+    # Add compression configuration
+    compression: none
+  propagators:
+    - tracecontext
+    - baggage
+  sampler:
+    type: parentbased_traceidratio
+    argument: "1"

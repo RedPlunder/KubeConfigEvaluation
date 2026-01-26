@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scpi-invest-plus-partner
+  namespace: kafka
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scpi-invest-plus-partner
+  template:
+    metadata:
+      labels:
+        app: scpi-invest-plus-partner
+    spec:
+      containers:
+        - name: scpi-invest-plus-partner
+          image: your-registry/scpi-invest-plus-partner:0.0.1-SNAPSHOT
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "k8s"
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka-0.kafka-headless.kafka.svc.cluster.local:9092,kafka-1.kafka-headless.kafka.svc.cluster.local:9092,kafka-2.kafka-headless.kafka.svc.cluster.local:9092"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10

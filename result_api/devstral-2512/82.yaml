@@ -1,0 +1,10 @@
+# values.yaml
+env:
+  DB_HOST: "localhost"
+  DB_PORT: "5432"
+
+secrets:
+  secretPassword:
+    name: "my-app-secrets"
+    key: "password"
+    value: "my-plaintext-password" # This will be base64 encoded by Helm

@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: default
+
+resources:
+  - postgres-statefulset.yaml
+  - postgres-service.yaml
+
+# Use commonLabels carefully - they're added to BOTH selectors and labels
+commonLabels:
+  app: postgres
+  environment: production
+
+# Avoid using namePrefix/nameSuffix which can break service discovery
+# namePrefix: myapp-
+
+# If you need additional labels only on resources (not selectors), use this:
+labels:
+  - pairs:
+      managed-by: kustomize
+    includeSelectors: false

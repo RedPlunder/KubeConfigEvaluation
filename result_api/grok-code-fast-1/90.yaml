@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tool-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/auth-tls-secret: "default/ca-secret"  # Same CA secret, but verification is off
+    nginx.ingress.kubernetes.io/auth-tls-verify-client: "off"  # Disable client certificate verification for this Ingress
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - tool.app.example.com
+    secretName: tls-secret  # Your TLS certificate secret for the subdomain
+  rules:
+  - host: tool.app.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: tool-service  # Service for the tool application
+            port:
+              number: 80

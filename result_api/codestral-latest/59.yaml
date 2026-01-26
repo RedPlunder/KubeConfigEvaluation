@@ -1,0 +1,24 @@
+# Complete Deployment.yaml with single combined options variable
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-java-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-java-service
+  template:
+    metadata:
+      labels:
+        app: test-java-service
+    spec:
+      containers:
+      - name: test-java-service
+        image: your-java-image:latest
+        command: ["sh", "-c"]
+        args:
+          - "java $JAVA_OPTS -jar java_j.jar"
+        env:
+        - name: JAVA_OPTS
+          value: "{{ .Values.TEST_JAVA_MEMORY_OPTS }} {{ .Values.TEST_JAVA_OPTS }}"

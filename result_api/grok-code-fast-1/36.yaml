@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jobsink-external-ingress
+  namespace: default  # Adjust to your namespace
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx  # Or your ingress class
+  rules:
+  - host: your-domain.com  # Replace with your external domain
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: jobsink-service-name  # Replace with actual jobSink service name, e.g., 'myjobsink-kn-channel'
+            port:
+              number: 80  # Adjust if your jobSink uses a different port
+  tls:
+  - hosts:
+    - your-domain.com
+    secretName: your-tls-secret  # Optional: For HTTPS, replace with your TLS secret

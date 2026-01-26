@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-back-ingress
+  namespace: my-api-namespace
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.allow-http: "false"
+    networking.gke.io/managed-certificates: "api-back-cert"
+spec:
+  rules:
+    - host: www.my-api-url.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api-back
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - www.my-api-url.com
+      secretName: api-back-tls

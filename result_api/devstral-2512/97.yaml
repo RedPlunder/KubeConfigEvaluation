@@ -1,0 +1,18 @@
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: akv-pfx-secret
+  namespace: default
+spec:
+  provider: azure
+  parameters:
+    usePodIdentity: "false"
+    useVMManagedIdentity: "true"
+    userAssignedIdentityID: "YOUR_MANAGED_IDENTITY_CLIENT_ID"
+    keyvaultName: "YOUR_KEYVAULT_NAME"
+    objects: |
+      array:
+        - |
+          objectName: "YOUR_PFX_SECRET_NAME"
+          objectType: secret
+    tenantId: "YOUR_TENANT_ID"

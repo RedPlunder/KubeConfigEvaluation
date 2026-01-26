@@ -1,0 +1,60 @@
+argo-cd:
+  enabled: true
+  dex:
+    enabled: false
+  notifications:
+    enabled: false
+  applicationSet:
+    enabled: true
+    # Enable the ApplicationSet controller
+    controller:
+      enabled: true
+  server:
+    extraArgs:
+      - --insecure
+    service:
+      type: NodePort
+      nodePort: 32080
+  namespaceOverride: "argo-cd"
+
+# ApplicationSets configuration should be nested under argo-cd
+argo-cd:
+  applicationsets:
+    core:
+      goTemplate: true
+      generators:
+        - git:
+            repoURL: https://mygitrepo.git
+            revision: HEAD
+            directories:
+              - path: kubernetes-deployments/core/*
+      template:
+        metadata:
+          name: '{{path.basename}}'
+          labels: {}
+        spec:
+          project: default
+          source:
+            repoURL: https://mygitrepo.git
+            targetRevision: HEAD
+            path: "{{ .path.path }}"
+            helm:
+              valueFiles:
+                - values.yaml
+          destination:
+            server: https://kubernetes.default.svc
+            namespace: "{{ base .path.path }}"
+          revisionHistoryLimit: 5
+          syncPolicy:
+            syncOptions:
+              - ApplyOutOfSyncOnly=true
+              - CreateNamespace=true
+              - RespectIgnoreDifferences=true
+              - PruneLast=true
+            automated:
+              prune: true
+              selfHeal: true
+          ignoreDifferences: []
+      syncPolicy:
+        preserveResourcesOnDeletion: true
+        applicationsSync: sync

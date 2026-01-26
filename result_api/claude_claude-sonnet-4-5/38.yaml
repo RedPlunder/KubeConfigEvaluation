@@ -1,0 +1,9 @@
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: shared-secret
+  namespace: my-namespace
+  annotations:
+    operator.1password.io/auto-restart: "true"
+spec:
+  itemPath: "vaults/my-vault/items/my-secret"

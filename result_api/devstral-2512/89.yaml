@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: istio-ingressgateway
+  namespace: istio-system
+spec:
+  template:
+    spec:
+      containers:
+      - name: istio-proxy
+        volumeMounts:
+        - name: ingressgateway-certs
+          mountPath: /etc/istio/ingressgateway-certs
+          readOnly: true
+      volumes:
+      - name: ingressgateway-certs
+        secret:
+          secretName: star-customer-ocs-nu-crt
+          optional: true

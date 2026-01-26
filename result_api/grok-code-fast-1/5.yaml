@@ -1,0 +1,14 @@
+# values.yaml (updated with default branch)
+global:
+  namespace: ""
+  branch: "poc-cicd"  # Default; can be overridden
+backend:
+  repository: backcicd
+  tag: "{{ .Values.global.branch }}"
+  replicas: 1
+  port: 8080
+mongo:
+  repository: mongocicd
+  tag: "{{ .Values.global.branch }}"
+  port: 27017
+  pullPolicy: IfNotPresent

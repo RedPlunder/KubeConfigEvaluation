@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-dns
+  namespace: kube-system
+spec:
+  template:
+    spec:
+      containers:
+      - name: external-dns
+        args:
+        - --source=ingress
+        - --provider=aws
+        - --policy=sync  # Changed from upsert-only to sync
+        - --registry=txt
+        - --txt-owner-id=external-dns
+        - --aws-zone-type=public
+        - --interval=5m  # Increased from default 1m
+        - --log-level=debug

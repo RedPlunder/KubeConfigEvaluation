@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: artemis-webconsole-ingress
+spec:
+  rules:
+  - host: instance0.your-domain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: broker-webconsole-svc-0
+            port:
+              number: 8080
+  - host: instance1.your-domain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: broker-webconsole-svc-1
+            port:
+              number: 8080

@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftp1
+  labels:
+    app: ftp1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ftp1
+  template:
+    metadata:
+      labels:
+        app: ftp1
+    spec:
+      containers:
+        - name: ftp1
+          image: your-registry/your-ftp-image:stable
+          imagePullPolicy: IfNotPresent
+          # Allocate TTY and keep stdin open so `kubectl attach -it` can work
+          tty: true
+          stdin: true
+          stdinOnce: false
+          # Example command that keeps the container running and attached to the TTY
+          # Adjust to your real entrypoint if needed
+          command: ["/bin/bash", "-c", "--"]
+          args: ["while true; do sleep 3600; done"]
+          ports:
+            - name: ftp
+              containerPort: 21
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+      restartPolicy: Always

@@ -1,0 +1,28 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: deployment-scaler
+rules:
+  # 1. Allow viewing and editing the main Deployment resource
+  # (Required for 'kubectl get deploy' and 'kubectl edit deploy')
+  - apiGroups: 
+      - "apps"
+    resources: 
+      - deployments
+    verbs: 
+      - get
+      - list
+      - watch
+      - patch
+      - update
+
+  # 2. Allow operations specifically on the /scale subresource
+  # (Required for 'kubectl scale deploy')
+  - apiGroups: 
+      - "apps"
+    resources: 
+      - deployments/scale
+    verbs: 
+      - get     # Required: kubectl reads current scale before patching
+      - update  # Required: saves changes
+      - patch   # Required: saves changes via merge

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: transport-latency-nginx
+  namespace: airflow
+  labels:
+    app.kubernetes.io/name: nginx
+    app.kubernetes.io/instance: transport-latency
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: nginx
+    app.kubernetes.io/instance: transport-latency
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP

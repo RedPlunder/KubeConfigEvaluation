@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-with-startup-and-readiness
+  labels:
+    app: my-app
+spec:
+  terminationGracePeriodSeconds: 30
+  containers:
+    - name: my-app
+      image: registry.k8s.io/busybox:1.36
+      imagePullPolicy: IfNotPresent
+      command:
+        - /bin/sh
+        - -c
+        - |
+          # Simulate heavy initialization
+          echo "Initializing..."
+          sleep 30
+          # Mark app as ready by creating a file
+          touch /tmp/ready
+          echo "Initialization complete, starting main process"
+          # Simple HTTP server that uses /tmp/ready as readiness state
+          while true; do
+            if [ -f /tmp/ready ]; then
+              BODY="OK"
+              CODE="200"
+            else
+              BODY="NOT READY"
+              CODE="503"
+            fi
+            { echo -e "HTTP/1.1 ${CODE} OK\r\n\r\n${BODY}"; } | nc -l -p 8080;
+          done
+      ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+      # Startup probe: only during startup, gates readiness/liveness
+      startupProbe:
+        httpGet:
+          path: /
+          port: 8080
+        initialDelaySeconds: 40
+        periodSeconds: 10
+        timeoutSeconds: 2
+        successThreshold: 1
+        failureThreshold: 6
+      # Readiness probe: runs for whole lifecycle, but is cheap and infrequent
+      readinessProbe:
+        httpGet:
+          path: /
+          port: 8080
+        # Wait a bit before first readiness check
+        initialDelaySeconds: 50
+        # Infrequent checks to reduce overhead
+        periodSeconds: 30
+        timeoutSeconds: 2
+        successThreshold: 1
+        failureThreshold: 3
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+        limits:
+          cpu: "500m"
+          memory: "256Mi"
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true

@@ -1,0 +1,19 @@
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: external-services-aws-alpine
+  namespace: default # Change this to the namespace where your pods are running
+spec:
+  hosts:
+  - "*.amazonaws.com"
+  - "*.s3.amazonaws.com"
+  - "dl-cdn.alpinelinux.org"
+  location: MESH_EXTERNAL
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+  resolution: DNS

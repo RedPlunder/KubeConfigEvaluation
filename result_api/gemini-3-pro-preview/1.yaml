@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftp1
+  labels:
+    app: ftp1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ftp1
+  template:
+    metadata:
+      labels:
+        app: ftp1
+    spec:
+      containers:
+      - name: ftp1
+        # Replace with your specific image
+        image: ubuntu:latest 
+        # Crucial: PID 1 must be a shell if you want to 'attach' to a shell.
+        # If your image starts a service automatically, 'attach' will connect to that service, not bash.
+        command: ["/bin/bash"] 
+        # These two fields enable interactive attach
+        stdin: true
+        tty: true

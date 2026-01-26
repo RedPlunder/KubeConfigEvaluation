@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: java-selenium-app
+  labels:
+    app: java-selenium
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: java-selenium
+  template:
+    metadata:
+      labels:
+        app: java-selenium
+    spec:
+      # Selenium Chrome often requires shared memory to prevent crashes
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+        # Add your secret volumes here
+        - name: secret-volume
+          secret:
+            secretName: your-secret-name
+
+      containers:
+        # ---------------------------------------------------------
+        # 1. Your Main Java Application
+        # ---------------------------------------------------------
+        - name: java-app
+          # Replace with your actual application image
+          image: your-java-app-image:latest 
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SELENIUM_URL
+              value: "http://localhost:4444/wd/hub"
+          # Ensure your Java app retries connections on startup, 
+          # as Chrome might take a few seconds to be ready.
+          
+        # ---------------------------------------------------------
+        # 2. The Selenium Sidecar (Moved from initContainers)
+        # ---------------------------------------------------------
+        - name: remote-chrome-webdriver
+          image: selenium/standalone-chrome:4.23.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 4444
+              protocol: TCP
+          # Best practice: Mount /dev/shm to prevent Chrome crashes
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
+            # Mounts from your original snippet
+            - name: secret-volume
+              readOnly: true
+              mountPath: "/etc/xxxxx"
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "1000m"
+              memory: "2Gi"

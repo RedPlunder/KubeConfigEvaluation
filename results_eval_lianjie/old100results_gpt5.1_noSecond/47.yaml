@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pwa-app-production-sidecar
+  labels:
+    app: myapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myapp
+      env: production
+  template:
+    metadata:
+      name: app
+      labels:
+        app: myapp
+        env: production
+    spec:
+      volumes:
+        - name: pwa-disk
+          emptyDir: {}
+      containers:
+        - name: node
+          image: node
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              # Example: build into the shared volume
+              cp -a /var/www/. /var/www-shared/
+              # Or run your build here and output to /var/www-shared
+              tail -f /dev/null
+          volumeMounts:
+            - name: pwa-disk
+              mountPath: /var/www-shared
+          ports:
+            - name: app
+              containerPort: 3000
+            - name: api
+              containerPort: 3001
+          resources:
+            limits:
+              memory: "500Mi"
+              cpu: "100m"
+          imagePullPolicy: Always
+        - name: nginx
+          image: nginx
+          command:
+            - /bin/sh
+            - -c
+            - |
+              nginx -c /nginx.prod.conf -g 'daemon off;'
+          ports:
+            - name: http
+              containerPort: 80
+          volumeMounts:
+            - name: pwa-disk
+              mountPath: /usr/local/nginx/html
+              readOnly: true
+          resources:
+            limits:
+              memory: "500Mi"
+              cpu: "100m"
+          imagePullPolicy: Always

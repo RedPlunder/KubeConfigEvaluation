@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: auth0-tenant-report-sh-c
+spec:
+  schedule: "0 0 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: report-generator
+            image: your-registry/your-image:tag
+            # FIX: Using sh -c requires a placeholder for $0.
+            command: ["/bin/sh", "-c", ". /home/cronrun/start.sh"]
+            # The first argument ("--") becomes $0.
+            # "tenant1" becomes $1.
+            # "legacy-db" becomes $2.
+            args: ["--", "tenant1", "legacy-db"]
+            
+            resources:
+              requests:
+                memory: "128Mi"
+                cpu: "100m"
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsNonRoot: true
+              runAsUser: 1000

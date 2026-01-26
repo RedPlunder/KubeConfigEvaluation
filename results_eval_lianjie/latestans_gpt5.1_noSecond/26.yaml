@@ -1,0 +1,23 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: auth0-report
+spec:
+  schedule: "0 * * * *"  # run hourly as an example
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: auth0-report
+              image: your-registry/your-image:latest
+              imagePullPolicy: IfNotPresent
+              command: ["/bin/sh", "-c", "/home/cronrun/start.sh \"$@\"", "--"]
+              args: ["tenant1", "legacy-db"]
+              securityContext:
+                runAsNonRoot: true
+                readOnlyRootFilesystem: true

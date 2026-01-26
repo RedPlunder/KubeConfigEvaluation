@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webtest-deployment
+  labels:
+    app: webtest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webtest
+  template:
+    metadata:
+      labels:
+        app: webtest
+      annotations:
+        # Changing this value forces Kubernetes to kill old pods and create new ones.
+        # In a real Helm chart, this is generated dynamically (e.g., using a timestamp or random string).
+        rollout/id: "abc123randomstring"
+    spec:
+      containers:
+        - name: webtest
+          image: my-local-app:v1
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 80

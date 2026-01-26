@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-dns
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/name: external-dns
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: external-dns
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: external-dns
+    spec:
+      serviceAccountName: external-dns
+      securityContext:
+        fsGroup: 65534
+      containers:
+        - name: external-dns
+          image: registry.k8s.io/external-dns/external-dns:v0.14.0
+          args:
+            - --source=service
+            - --source=ingress
+            # Restrict to the specific domain to avoid accidental broad scanning
+            - --domain-filter=domain.com
+            - --provider=aws
+            # 'sync' allows creation and deletion. Safe ONLY with unique owner-id.
+            - --policy=sync
+            - --aws-zone-type=public
+            - --registry=txt
+            # CRITICAL FIX: Unique ID for this specific cluster/environment.
+            # This prevents conflicts with other clusters managing the same Hosted Zone.
+            - --txt-owner-id=eks-staging-env-v1
+          env:
+            # Ensure this matches your cluster's region
+            - name: AWS_DEFAULT_REGION
+              value: "us-east-1"

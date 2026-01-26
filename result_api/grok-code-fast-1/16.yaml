@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-world-rest-deployment
+  labels:
+    app: hello-world-rest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-world-rest
+  template:
+    metadata:
+      labels:
+        app: hello-world-rest
+    spec:
+      containers:
+      - name: hello-world-rest-container
+        image: your-registry/hello-world-rest:latest  # Replace with your actual image
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        livenessProbe:
+          httpGet:
+            path: /hello
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /hello
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5

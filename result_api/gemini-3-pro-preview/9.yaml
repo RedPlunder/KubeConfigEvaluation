@@ -1,0 +1,77 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: conditional-dag-legacy-
+spec:
+  entrypoint: mother
+  serviceAccountName: default
+  templates:
+    - name: mother
+      dag:
+        tasks:
+          - name: main-job
+            template: main-job-step
+
+          - name: optional-job-one
+            dependencies: [main-job]
+            when: "{{tasks.main-job.outputs.parameters.command}} == OPTION1 || {{tasks.main-job.outputs.parameters.command}} == BothOptions"
+            template: option-template
+            arguments:
+              parameters:
+                - name: msg
+                  value: "Running Job One"
+
+          - name: optional-job-two
+            dependencies: [main-job]
+            when: "{{tasks.main-job.outputs.parameters.command}} == OPTION2 || {{tasks.main-job.outputs.parameters.command}} == BothOptions"
+            template: option-template
+            arguments:
+              parameters:
+                - name: msg
+                  value: "Running Job Two"
+
+          # 4. The New Step (Solution)
+          - name: optional-job-three
+            # Explicitly define the DAG structure: Wait for these to finish
+            dependencies: [optional-job-one, optional-job-two]
+            # Evaluate status variables. Note: Skipped jobs will resolve to status "Skipped"
+            when: "{{tasks.optional-job-one.status}} == Succeeded || {{tasks.optional-job-two.status}} == Succeeded"
+            template: final-step-template
+            arguments:
+              parameters:
+                - name: argument-one
+                  value: "{{tasks.main-job.outputs.parameters.argument-one}}"
+
+    # --- Worker Templates ---
+    - name: main-job-step
+      script:
+        image: python:alpine3.6
+        command: [python]
+        source: |
+          # Test with 'OPTION1' here to see Job 2 Skip, but Job 3 succeed.
+          print("OPTION1") 
+          with open("/tmp/command", "w") as f: f.write("OPTION1")
+          with open("/tmp/arg1", "w") as f: f.write("val1")
+          with open("/tmp/arg2", "w") as f: f.write("val2")
+      outputs:
+        parameters:
+          - name: command
+            valueFrom: {path: "/tmp/command"}
+          - name: argument-one
+            valueFrom: {path: "/tmp/arg1"}
+          - name: argument-two
+            valueFrom: {path: "/tmp/arg2"}
+
+    - name: option-template
+      inputs:
+        parameters: [{name: msg}]
+      container:
+        image: alpine:latest
+        command: [echo, "{{inputs.parameters.msg}}"]
+
+    - name: final-step-template
+      inputs:
+        parameters: [{name: argument-one}]
+      container:
+        image: alpine:latest
+        command: [echo, "Job Three Running! Arg: {{inputs.parameters.argument-one}}"]

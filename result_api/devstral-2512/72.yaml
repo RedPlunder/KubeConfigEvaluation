@@ -1,0 +1,12 @@
+apiVersion: external-secrets.io/v1beta1
+kind: SecretStore
+metadata:
+  name: azure-keyvault
+  namespace: default
+spec:
+  provider:
+    azurekv:
+      authType: ManagedIdentity
+      identityId: "eeeeee-eeeeeee-eeeeeeee-eeeee-eeeeeeeeeeee"  # Use Client ID (not Principal ID)
+      vaultUrl: "https://my.vault.azure.net"
+      tenantId: "your-tenant-id"  # Required for Managed Identity

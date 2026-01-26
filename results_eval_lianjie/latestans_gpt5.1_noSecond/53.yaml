@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ollama
+  labels:
+    app: ollama
+spec:
+  serviceName: ollama
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+    spec:
+      containers:
+        - name: ollama
+          image: your-registry/ollama-nvidia:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: MODELS
+              value: "llama3.2,another-model"
+          ports:
+            - name: http
+              containerPort: 11434
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - bash
+                  - -c
+                  - |
+                    # Wait for ollama to be ready
+                    for i in $(seq 30); do
+                      if ollama ps >/dev/null 2>&1; then
+                        break
+                      fi
+                      sleep 1
+                    done
+                    # Pull models from comma-separated MODELS env var
+                    for model in ${MODELS//,/ }; do
+                      echo "Pulling model: $model"
+                      ollama pull "$model"
+                    done
+          resources:
+            requests:
+              cpu: "1"
+              memory: "4Gi"
+            limits:
+              cpu: "4"
+              memory: "16Gi"
+          volumeMounts:
+            - name: ollama-data
+              mountPath: /root/.ollama
+      volumes:
+        - name: ollama-data
+          emptyDir: {}

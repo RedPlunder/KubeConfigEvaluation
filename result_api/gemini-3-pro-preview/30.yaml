@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  annotations:
+    service.beta.kubernetes.io/oci-load-balancer-shape: "flexible"
+    service.beta.kubernetes.io/oci-load-balancer-internal: "false"
+    service.beta.kubernetes.io/oci-load-balancer-shape-flex-min: "2"
+    service.beta.kubernetes.io/oci-load-balancer-shape-flex-max: "8"
+    
+    # --- Health Check Configuration ---
+    # Protocol must match the application expectation (HTTP)
+    service.beta.kubernetes.io/oci-load-balancer-health-check-protocol: "HTTP"
+    
+    # CRITICAL: This port MUST match the 'nodePort' defined in the spec below.
+    # The Load Balancer checks the Node IP at this port.
+    service.beta.kubernetes.io/oci-load-balancer-health-check-port: "30080"
+    
+    # The path your application serves (bypassing /healthz)
+    service.beta.kubernetes.io/oci-load-balancer-health-check-path: "/"
+    
+    # Explicitly expect a 200 OK
+    service.beta.kubernetes.io/oci-load-balancer-health-check-return-code: "200"
+  labels:
+    app: checklister-frontend
+spec:
+  type: LoadBalancer
+  # 'Cluster' ensures the health check succeeds even if the pod is on a different node
+  externalTrafficPolicy: Cluster 
+  selector:
+    app: checklister-frontend
+  ports:
+  - protocol: TCP
+    port: 80         # Port exposed on the Load Balancer IP
+    targetPort: 80   # Port the Container is listening on
+    # CRITICAL: We fix the NodePort so the annotation above knows where to look.
+    # Ensure 30080 is open in your OCI VCN Security List (Worker Node Subnet).
+    nodePort: 30080

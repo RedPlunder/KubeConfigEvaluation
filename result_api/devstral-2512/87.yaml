@@ -1,0 +1,25 @@
+# kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - deployment.yaml
+
+configMapGenerator:
+  - name: app-vars
+    literals:
+      - SERVICE_NAME=svc1
+
+patches:
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: common-base
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: $(SERVICE_NAME)
+      - op: replace
+        path: /metadata/labels/app
+        value: $(SERVICE_NAME)

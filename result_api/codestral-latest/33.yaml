@@ -1,0 +1,13 @@
+controller:
+  config:
+    use-forwarded-headers: "true"
+    compute-full-forwarded-for: "true"
+    use-proxy-protocol: "false"
+    proxy-real-ip-cidr: "0.0.0.0/0"
+  extraVolumes:
+    - name: nginx-configuration
+      configMap:
+        name: nginx-configuration
+  extraVolumeMounts:
+    - name: nginx-configuration
+      mountPath: /etc/nginx/conf.d/

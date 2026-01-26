@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp
+  annotations:
+    vault.hashicorp.com/agent-inject: "true"
+    vault.hashicorp.com/role: "myapp-role"
+    vault.hashicorp.com/agent-inject-secret-config: "secret/data/myapp/config"
+    vault.hashicorp.com/secret-volume-path: "/vault-temp"
+spec:
+  serviceAccountName: myapp
+  shareProcessNamespace: false
+  containers:
+  - name: app
+    image: myapp:latest
+    command: ["/bin/sh"]
+    args:
+    - -c
+    - |
+      # Wait for secrets to be copied
+      while [ ! -f /app/conf/.secrets-ready ]; do sleep 1; done
+      exec /app/myapp-binary
+    volumeMounts:
+    - name: app-volume
+      mountPath: /app/conf
+      subPath: conf
+  - name: secret-copier
+    image: busybox:latest
+    command: ["/bin/sh"]
+    args:
+    - -c
+    - |
+      # Continuously sync secrets from Vault mount to shared volume
+      mkdir -p /shared/conf
+      while true; do
+        if [ -f /vault-temp/config ]; then
+          cp -f /vault-temp/config /shared/conf/
+          touch /shared/conf/.secrets-ready
+        fi
+        sleep 5
+      done
+    volumeMounts:
+    - name: app-volume
+      mountPath: /shared
+  volumes:
+  - name: app-volume
+    emptyDir: {}

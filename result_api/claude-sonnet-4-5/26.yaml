@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: auth0-report-generator
+  namespace: default
+spec:
+  schedule: "0 2 * * *"  # Runs daily at 2 AM
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: auth0-report
+        spec:
+          containers:
+          - name: auth0-reporter
+            image: your-registry/auth0-reporter:latest
+            command: ["/home/cronrun/start.sh"]
+            args: ["tenant1", "legacy-db"]
+            # Add other container configuration as needed
+            resources:
+              requests:
+                memory: "128Mi"
+                cpu: "100m"
+              limits:
+                memory: "256Mi"
+                cpu: "200m"
+          restartPolicy: OnFailure

@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: python-cgroup-aware
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: python-cgroup-aware
+  template:
+    metadata:
+      labels:
+        app: python-cgroup-aware
+    spec:
+      containers:
+      - name: python-app
+        image: python:3.10-slim
+        command: ["python", "-u", "/app/app.py"]
+        resources:
+          limits:
+            memory: "500Mi"
+          requests:
+            memory: "500Mi"
+        volumeMounts:
+        - name: script
+          mountPath: /app
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: script
+        configMap:
+          name: python-cgroup-aware-script

@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aspnetcore-app
+  labels:
+    app: aspnetcore-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aspnetcore-app
+  template:
+    metadata:
+      labels:
+        app: aspnetcore-app
+    spec:
+      containers:
+      - name: aspnetcore-app
+        image: your-aspnetcore-image
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+        volumeMounts:
+        - name: usersecrets
+          mountPath: /home/app/.microsoft/usersecrets
+          readOnly: true
+        - name: usersecrets-root
+          mountPath: /root/.microsoft/usersecrets
+          readOnly: true
+        - name: aspnet-https
+          mountPath: /home/app/.aspnet/https
+          readOnly: true
+        - name: aspnet-https-root
+          mountPath: /root/.aspnet/https
+          readOnly: true
+      volumes:
+      - name: usersecrets
+        hostPath:
+          path: /mnt/c/Users/<your-username>/AppData/Roaming/Microsoft/UserSecrets
+          type: Directory
+      - name: usersecrets-root
+        hostPath:
+          path: /mnt/c/Users/<your-username>/AppData/Roaming/Microsoft/UserSecrets
+          type: Directory
+      - name: aspnet-https
+        hostPath:
+          path: /mnt/c/Users/<your-username>/AppData/Roaming/ASP.NET/Https
+          type: Directory
+      - name: aspnet-https-root
+        hostPath:
+          path: /mnt/c/Users/<your-username>/AppData/Roaming/ASP.NET/Https
+          type: Directory

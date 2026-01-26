@@ -1,0 +1,9 @@
+env:
+  secret:
+    secretPassword:
+      name: my-prod-secret
+      key: password
+secret:  # For SealedSecret
+  name: my-prod-secret
+  encryptedData:
+    password: LS0tLS1CRUdJTi...  # Base64-encoded real encrypted data

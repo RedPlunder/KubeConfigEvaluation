@@ -1,0 +1,103 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  name: conditional-workflow-example
+  namespace: default  # Adjust to your namespace
+spec:
+  workflowSpec:
+    serviceAccountName: "{{ .Values.serviceAccountName }}"  # Assuming Helm rendering; replace with actual value if not using Helm
+    entrypoint: mother
+    templates:
+      - name: mother
+        dag:
+          tasks:
+            - name: main-job
+              template: main-job-step
+            - name: decider
+              dependencies: [main-job]
+              template: decider-template
+            - name: optional-job-one
+              dependencies: [decider]
+              when: "{{tasks.decider.outputs.parameters.run_option1}} == true"
+              templateRef:
+                name: master-templater
+                template: option-one-template
+              arguments:
+                parameters:
+                  - name: argument-one
+                    value: "{{tasks.main-job.outputs.parameters.argument-one}}"
+                  - name: argument-two
+                    value: "{{tasks.main-job.outputs.parameters.argument-two}}"
+            - name: optional-job-two
+              dependencies: [decider]
+              when: "{{tasks.decider.outputs.parameters.run_option2}} == true"
+              templateRef:
+                name: master-templater
+                template: option-two-template
+              arguments:
+                parameters:
+                  - name: argument-one
+                    value: "{{tasks.main-job.outputs.parameters.argument-one}}"
+                  - name: argument-two
+                    value: "{{tasks.main-job.outputs.parameters.argument-two}}"
+            - name: optional-job-three
+              dependencies: [decider]
+              when: "{{tasks.decider.outputs.parameters.run_option3}} == true"
+              templateRef:
+                name: master-templater
+                template: option-three-template
+              arguments:
+                parameters:
+                  - name: argument-one
+                    value: "{{tasks.main-job.outputs.parameters.argument-one}}"
+                  - name: argument-two
+                    value: "{{tasks.main-job.outputs.parameters.argument-two}}"
+      - name: main-job-step
+        # Placeholder: Define your main-job container/script here
+        container:
+          image: alpine:latest
+          command: [sh, -c]
+          args: ["echo 'command=BothOptions' > /tmp/output; echo 'argument-one=value1' >> /tmp/output; echo 'argument-two=value2' >> /tmp/output"]
+        outputs:
+          parameters:
+            - name: command
+              valueFrom:
+                path: /tmp/output
+              expression: "string(split(lines, '=')[1])"
+            - name: argument-one
+              valueFrom:
+                path: /tmp/output
+              expression: "string(split(lines, '=')[1])"
+            - name: argument-two
+              valueFrom:
+                path: /tmp/output
+              expression: "string(split(lines, '=')[1])"
+      - name: decider-template
+        script:
+          image: python:3.9-slim  # Lightweight, secure image
+          command: [python]
+          source: |
+            import sys
+            command = sys.argv[1]
+            run_option1 = "true" if command in ["OPTION1", "BothOptions"] else "false"
+            run_option2 = "true" if command in ["OPTION2", "BothOptions"] else "false"
+            run_option3 = "true" if run_option1 == "true" or run_option2 == "true" else "false"
+            print(f"run_option1={run_option1}")
+            print(f"run_option2={run_option2}")
+            print(f"run_option3={run_option3}")
+          args: ["{{tasks.main-job.outputs.parameters.command}}"]
+        outputs:
+          parameters:
+            - name: run_option1
+              valueFrom:
+                path: /tmp/stdout
+              expression: "string(split(lines, '=')[1])"
+            - name: run_option2
+              valueFrom:
+                path: /tmp/stdout
+              expression: "string(split(lines, '=')[1])"
+            - name: run_option3
+              valueFrom:
+                path: /tmp/stdout
+              expression: "string(split(lines, '=')[1])"
+      # Assume master-templater and its templates (option-one-template, option-two-template, option-three-template) are defined elsewhere in your Workflow or cluster

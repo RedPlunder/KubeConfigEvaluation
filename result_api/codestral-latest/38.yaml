@@ -1,0 +1,12 @@
+# templates/onepassworditem.yaml
+{{- range .Values.onepass.items }}
+{{- $existing := lookup "onepassword.com/v1" "OnePasswordItem" .Release.Namespace .name }}
+{{- if not $existing }}
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: {{ .name }}
+  annotations:
+    operator.1password.io/auto-restart: {{ .autorestart | default true | quote }}
+spec:
+  itemPath: {{ .path }}

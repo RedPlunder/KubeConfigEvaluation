@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cassandra
+spec:
+  serviceName: cassandra
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cassandra
+  template:
+    metadata:
+      labels:
+        app: cassandra
+    spec:
+      containers:
+        - name: cassandra
+          image: sevabek/cassandra:latest
+          ports:
+            - containerPort: 9042
+          volumeMounts:
+            - mountPath: /var/lib/cassandra
+              name: cassandra-storage
+          env:
+            - name: MAX_HEAP_SIZE
+              value: "1G"
+            - name: HEAP_NEWSIZE
+              value: "100M"
+          livenessProbe:
+            exec:
+              command:
+                - cqlsh
+                - -e
+                - "SELECT release_version FROM system.local;"
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 2
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1000m"
+            limits:
+              memory: "2Gi"
+              cpu: "1500m"
+  volumeClaimTemplates:
+    - metadata:
+        name: cassandra-storage
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 3Gi

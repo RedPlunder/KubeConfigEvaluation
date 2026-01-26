@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: telemetry-asterix-adapter-svc
+  namespace: utm
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-health-probe-protocol: tcp
+    service.beta.kubernetes.io/azure-load-balancer-health-probe-port: "8080"
+spec:
+  type: LoadBalancer
+  ports:
+    - protocol: UDP
+      port: 1025
+      targetPort: 6000
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: telemetry-asterix-adapter

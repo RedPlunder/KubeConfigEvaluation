@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: quality-apatha
+  namespace: default
+  labels:
+    app: quality-apatha
+spec:
+  schedule: "*/1 * * * *"              # runs every minute (UTC)
+  concurrencyPolicy: Forbid            # do not run a new Job if the previous one is still running
+  startingDeadlineSeconds: 100         # optional: deadline for starting a missed run
+  successfulJobsHistoryLimit: 3        # default; keep last 3 successful Jobs
+  failedJobsHistoryLimit: 1            # default; keep last failed Job
+  jobTemplate:
+    spec:
+      backoffLimit: 0                  # do not retry Pods for this Job
+      template:
+        spec:
+          restartPolicy: Never         # Pods are not restarted by kubelet
+          containers:
+            - name: quality-apatha
+              image: foo-image-path
+              imagePullPolicy: Always
+              resources:
+                limits:
+                  cpu: "500m"
+                  memory: "512Mi"
+              env:
+                - name: foo
+                  value: bar
+              volumeMounts:
+                - name: foo
+                  mountPath: /bar      # example path; adjust as needed
+              args:
+                - java
+                - -cp
+                - qe_java.job.jar:qe_java-1.0-snapshot-tests.jar
+                - org.junit.runner.JUnitCore
+                - com.liveramp.qe_java.RunCucumberTest
+          volumes:
+            - name: foo
+              secret:
+                secretName: bar

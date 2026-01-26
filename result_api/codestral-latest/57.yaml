@@ -1,0 +1,25 @@
+apiVersion: k3d.io/v1alpha4
+kind: Simple
+metadata:
+  name: mycluster
+servers: 1
+agents: 2
+ports:
+  - port: 8080:80
+    nodeFilters:
+      - loadbalancer
+registries:
+  create:
+    name: registry.localhost
+    host: "0.0.0.0"
+    hostPort: "5000"
+    proxy:
+      remoteURL: https://registry-1.docker.io
+    volumes:
+      - /path/to/local/registry/data:/var/lib/registry
+options:
+  k3s:
+    extraArgs:
+      - arg: --disable=traefik
+        nodeFilters:
+          - server:*

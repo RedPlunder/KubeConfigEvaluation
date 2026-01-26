@@ -1,0 +1,9 @@
+apiVersion: eks.amazonaws.com/v1alpha1
+kind: PodIdentityAssociation
+metadata:
+  name: pod-deletion-role
+  namespace: default # Replace with your namespace
+spec:
+  clusterName: your-cluster-name # Replace with your cluster name
+  serviceAccount: your-service-account # Replace with your service account
+  roleArn: arn:aws:iam::your-account-id:role/your-role-name # Replace with your role ARN

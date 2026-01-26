@@ -1,0 +1,31 @@
+{{- range .Values.onepass.items }}
+{{- /* 
+    1. Define variables for cleaner lookup syntax.
+    2. "lookup" signature: lookup apiVersion, kind, namespace, name 
+*/ -}}
+{{- $apiVersion := "onepassword.com/v1" -}}
+{{- $kind := "OnePasswordItem" -}}
+{{- $namespace := $.Release.Namespace -}}
+{{- $name := .name -}}
+
+{{- /* 
+    Check if the object exists. 
+    lookup returns a map object if found, or an empty dict/nil if not.
+*/ -}}
+{{- $existingObj := lookup $apiVersion $kind $namespace $name -}}
+
+{{- /* Only render the YAML if the object does NOT exist */ -}}
+{{- if not $existingObj }}
+apiVersion: {{ $apiVersion }}
+kind: {{ $kind }}
+metadata:
+  name: {{ $name }}
+  annotations:
+    # Adding a resource policy "keep" is highly recommended here.
+    # It prevents the resource from being deleted if this specific Helm release is uninstalled,
+    # protecting other services that might now rely on this shared secret.
+    helm.sh/resource-policy: keep
+    operator.1password.io/auto-restart: {{ .autorestart | default true | quote }}
+spec:
+  itemPath: {{ .path }}
+{{- end }}

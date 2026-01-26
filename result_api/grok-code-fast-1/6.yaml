@@ -1,0 +1,11 @@
+# Dev overrides for parent chart app-test
+# This includes dev-specific values for the subchart 'app'
+app:
+  # Copy all key-value pairs from the original app/values-dev.yaml here
+  # For example (replace with actual contents from app/values-dev.yaml):
+  image:
+    tag: "dev"
+  replicas: 2
+  # ... other dev-specific fields from app/values-dev.yaml
+
+# Add any additional parent-specific dev overrides below if needed

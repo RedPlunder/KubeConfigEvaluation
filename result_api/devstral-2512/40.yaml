@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "my-role"
+        vault.hashicorp.com/secret-volume-path: "/app/conf"  # Mount secrets to /app/conf instead of /app
+    spec:
+      containers:
+      - name: my-app
+        image: my-app-image
+        volumeMounts:
+        - name: vault-agent-injector
+          mountPath: /app/conf  # Ensure the mount path matches the secret-volume-path
+      volumes:
+      - name: vault-agent-injector
+        emptyDir: {}

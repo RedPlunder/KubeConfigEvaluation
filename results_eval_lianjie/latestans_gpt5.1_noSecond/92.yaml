@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: myapp-config
+  labels:
+    app.kubernetes.io/name: myapp
+    app.kubernetes.io/instance: myapp-release
+data:
+  config.play.ts: |
+    const config = {
+      {{- /* Render all keys except PLAY_EXPIRES_IN_MS via JSON */}}
+      {{- $play := .Values.app.play }}
+      {{- /* Manually render PORT and API_URL as JSON-like */}}
+      "PORT": {{ $play.PORT }},
+      "API_URL": {{ $play.API_URL | quote }},
+      {{- /* Render PLAY_EXPIRES_IN_MS as raw JS expression */}}
+      "PLAY_EXPIRES_IN_MS": {{ $play.PLAY_EXPIRES_IN_MS }}
+    };
+    export default config;

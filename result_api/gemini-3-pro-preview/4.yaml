@@ -1,0 +1,48 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-protected-routes
+  namespace: default
+  annotations:
+    # 1. External Authentication
+    # Points to your auth service. NGINX passes Cookies by default.
+    nginx.ingress.kubernetes.io/auth-url: "http://check-auth.default.svc.cluster.local:1221/review/request"
+    
+    # 2. CORS / Headers Logic (Translating the Caddy Headers)
+    # Using configuration-snippet to dynamically set headers based on variables
+    # equivalent to Caddy's {http.request.header.Origin}
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "Vary: Origin";
+      more_set_headers "Access-Control-Allow-Credentials: true";
+      more_set_headers "Access-Control-Allow-Origin: $http_origin";
+      
+    # 3. Custom Error Page (Optional - Translating 'respond "Access denied!" 403')
+    # Note: Standard NGINX auth usually returns a generic 403. 
+    # This snippet forces a specific text response on 403 errors for these paths.
+    nginx.ingress.kubernetes.io/server-snippet: |
+      error_page 403 =403 /custom_403;
+      location = /custom_403 {
+        internal;
+        return 403 "Access denied!";
+      }
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: example.com
+    http:
+      paths:
+      # The specific protected paths
+      - path: /path1/loc1
+        pathType: Prefix
+        backend:
+          service:
+            name: page
+            port:
+              number: 80
+      - path: /path2/loc3
+        pathType: Prefix
+        backend:
+          service:
+            name: page
+            port:
+              number: 80

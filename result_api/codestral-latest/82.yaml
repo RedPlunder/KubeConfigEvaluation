@@ -1,0 +1,10 @@
+env:
+  secret:
+    secretPassword:
+      name: production-password-secret
+      key: password
+      value: "my-production-password"
+    secretApiKey:
+      name: production-api-secret
+      key: api-key
+      value: "my-production-api-key"

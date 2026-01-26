@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: your-app-deployment  # Replace with your actual deployment name
+  namespace: default  # Assuming default namespace; adjust if needed
+spec:
+  replicas: 1  # Adjust as needed for production
+  selector:
+    matchLabels:
+      app: your-app
+  template:
+    metadata:
+      labels:
+        app: your-app
+    spec:
+      initContainers:
+        - name: wait-for-chrome
+          image: busybox:latest
+          imagePullPolicy: IfNotPresent
+          command: ['sh', '-c', 'until curl -f http://localhost:4444/wd/hub/status; do echo "Waiting for remote-chrome-webdriver..."; sleep 5; done;']
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi  # Example production-ready resource limits; adjust based on your .Values.resources
+      containers:
+        - name: your-main-app  # Replace with your actual main container name
+          image: your-app-image:latest  # Replace with your actual app image
+          # Add other fields for your main app container as needed (ports, env, etc.)
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi  # Example; adjust based on your .Values.resources
+        - name: remote-chrome-webdriver
+          image: xxxxxxxxxx/selenium/standalone-chrome:4.23.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 4444
+              protocol: TCP
+          env:
+            - name: "xxxxx_APPLICATION_CREDENTIALS"
+              value: your-actual-value  # Replace with rendered value from .Values.env.xxxxxxxxxxx
+          envFrom:
+            - secretRef:
+                name: xxxxxx
+          volumeMounts:
+            - name: xxxxxx
+              readOnly: true
+              mountPath: "/etc/xxxxx"
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              memory: 512Mi  # Example production-ready resource limits; adjust based on your .Values.resources
+      volumes:
+        - name: xxxxxx
+          secret:
+            secretName: xxxxxx  # Assuming this is a Secret volume; adjust if different
+      restartPolicy: Always  # Valid at pod level

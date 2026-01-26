@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mongo-seed
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: check-db-ready
+        image: mongo:latest
+        command: ['sh', '-c', 'until mongo --host mongodb-mongo-srv --eval "db.adminCommand(\"ping\")"; do sleep 2; done']
+      containers:
+      - name: seed
+        image: mongo:latest
+        command: ["mongoimport", "--host", "mongodb-mongo-srv", "--db", "mydb", "--collection", "accounts", "--type", "json", "--file", "/data/init.json", "--jsonArray"]
+        volumeMounts:
+        - name: seed-data
+          mountPath: /data
+      volumes:
+      - name: seed-data
+        configMap:
+          name: seed-data
+          items:
+          - key: init.json
+            path: init.json
+      restartPolicy: Never

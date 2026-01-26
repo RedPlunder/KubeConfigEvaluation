@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: myapp-content-config
+  namespace: default
+data:
+  content.properties: |
+    {
+      "Enabled": false,
+      "ApiEndpoint": "https://api.example.com"
+    }

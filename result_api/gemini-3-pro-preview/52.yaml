@@ -1,0 +1,40 @@
+apiVersion: apps.kruise.io/v1alpha1
+kind: CloneSet
+metadata:
+  name: myapp
+  labels:
+    app: myapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myapp
+  # This strategy tells the controller to try updating images without killing the Pod
+  updateStrategy:
+    type: InPlaceIfPossible
+    inPlaceUpdateStrategy:
+      gracePeriodSeconds: 0
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+        - name: myapp
+          image: alpine:latest
+          command: ['sh', '-c', 'while true; do echo "logging" >> /opt/logs.txt; sleep 1; done']
+          volumeMounts:
+            - name: data
+              mountPath: /opt
+      # Native Sidecar (initContainer with RestartPolicy: Always)
+      initContainers:
+        - name: logshipper
+          image: alpine:latest # Change this field to trigger in-place update
+          restartPolicy: Always
+          command: ['sh', '-c', 'tail -F /opt/logs.txt']
+          volumeMounts:
+            - name: data
+              mountPath: /opt
+      volumes:
+        - name: data
+          emptyDir: {}

@@ -1,0 +1,26 @@
+# micro-app.yml (updated)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: react-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: react-app
+  template:
+    metadata:
+      labels:
+        app: react-app
+    spec:
+      containers:
+      - name: react-app
+        image: your-react-app-image
+        envFrom:
+        - configMapRef:
+            name: react-app-config
+        command: ["/bin/sh", "-c"]
+        args:
+        - /app/build.sh && nginx -g 'daemon off;'
+        ports:
+        - containerPort: 80

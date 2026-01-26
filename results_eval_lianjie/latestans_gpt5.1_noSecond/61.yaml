@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vite-react-azure-sso
+  namespace: default
+  labels:
+    app: vite-react-azure-sso
+spec:
+  selector:
+    app: vite-react-azure-sso
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+  type: ClusterIP

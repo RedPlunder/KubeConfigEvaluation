@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ingress-nginx-headers
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+data:
+  # These keys become header names; values are the header values.
+  # Adjust CSP as needed for your application.
+  Content-Security-Policy: >-
+    default-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.pendo.io https://*.storage.googleapis.com;
+    img-src 'self' https://*.pendo.io data:;
+    frame-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.pendo.io https://*.storage.googleapis.com blob: data:;
+    object-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.pendo.io https://*.storage.googleapis.com blob: data:;
+  Cache-Control: "no-store"

@@ -1,0 +1,12 @@
+externalAccess:
+  enabled: true
+  service:
+    type: LoadBalancer
+    ports:
+      external: 9094
+    externalIPs:
+      - 127.0.0.1
+  autoDiscovery:
+    enabled: true
+    advertisedListeners:
+      - "PLAINTEXT://localhost:9094"

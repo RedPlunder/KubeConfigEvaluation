@@ -1,0 +1,51 @@
+# values.yaml for Bitnami WordPress Helm chart with ConfigMap-based plugins
+
+# Disable the built-in plugin installation mechanism
+wordpressPlugins: ""
+
+# Configure init container to install plugins from ConfigMap
+initContainers:
+  - name: install-configmap-plugins
+    image: bitnami/wordpress:latest
+    command: ['/bin/bash', '/scripts/install-plugins.sh']
+    volumeMounts:
+      - name: plugins-data
+        mountPath: /plugins-source
+        readOnly: true
+      - name: wordpress-data
+        mountPath: /bitnami/wordpress
+      - name: plugin-installer-script
+        mountPath: /scripts
+
+# Add volumes for plugin data and installation script
+extraVolumes:
+  - name: plugins-data
+    configMap:
+      name: wordpress-plugins-data
+  - name: plugin-installer-script
+    configMap:
+      name: wordpress-plugin-installer-configmap
+      defaultMode: 0755
+
+extraVolumeMounts:
+  - name: wordpress-data
+    mountPath: /bitnami/wordpress
+
+# Standard WordPress configuration
+wordpressUsername: admin
+wordpressPassword: changeme
+wordpressEmail: admin@example.com
+
+# MariaDB configuration
+mariadb:
+  enabled: true
+  auth:
+    rootPassword: rootpassword
+    database: wordpress
+    username: wordpress
+    password: wordpress
+
+# Persistence
+persistence:
+  enabled: true
+  size: 10Gi

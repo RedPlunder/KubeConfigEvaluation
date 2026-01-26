@@ -1,0 +1,11 @@
+# app-test/values-dev.yaml
+global:
+  environment: development
+  imagePullPolicy: Always
+
+app:
+  replicaCount: 3
+  image:
+    tag: "1.0.0-dev"
+  service:
+    type: LoadBalancer

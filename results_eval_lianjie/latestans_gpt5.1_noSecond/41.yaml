@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: emqx-wss-ingress
+  namespace: default
+  labels:
+    app: emqx
+  annotations:
+    # Ingress-nginx will automatically handle WebSockets for HTTP backends.
+    # No special WebSocket annotation is required in current versions.
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - ui-dev.url.com
+      secretName: emqx-tls-secret
+  rules:
+    - host: ui-dev.url.com
+      http:
+        paths:
+          - path: /mqtt
+            pathType: Prefix
+            backend:
+              service:
+                name: emqx-websocket
+                port:
+                  number: 80

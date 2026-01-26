@@ -1,0 +1,20 @@
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: allow-all-external
+  namespace: default
+spec:
+  hosts:
+  - "*"
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+  - number: 53
+    name: dns
+    protocol: UDP
+  resolution: NONE
+  location: MESH_EXTERNAL

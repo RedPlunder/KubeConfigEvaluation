@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: penpot-backend
+  namespace: penpot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: penpot-backend
+  template:
+    metadata:
+      labels:
+        app: penpot-backend
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:15  # Use a compatible PostgreSQL client image
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h postgres -p 5432 -U penpot; do
+                echo "Waiting for Postgres...";
+                sleep 5;
+              done
+          env:
+            - name: PGPASSWORD
+              value: penpot
+      containers:
+        - name: penpot-backend
+          image: penpotapp/backend:latest
+          env:
+            - name: PENPOT_PUBLIC_URI
+              value: http://penpot-frontend
+            - name: PENPOT_DATABASE_HOST
+              value: postgres
+            - name: PENPOT_DATABASE_PORT
+              value: "5432"
+            - name: PENPOT_DATABASE_NAME
+              value: penpot
+            - name: PENPOT_DATABASE_USERNAME
+              value: penpot
+            - name: PENPOT_DATABASE_PASSWORD
+              value: penpot
+            - name: PENPOT_REDIS_HOST
+              value: redis
+            - name: PENPOT_REDIS_PORT
+              value: "6379"
+          ports:
+            - containerPort: 6060
+          # Added readiness/liveness probes for production readiness
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 6060
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 6060
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          # Added resource limits for production
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"

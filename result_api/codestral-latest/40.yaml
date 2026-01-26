@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+spec:
+  template:
+    metadata:
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "my-role"
+        vault.hashicorp.com/secret-volume-path: "/app/conf"
+    spec:
+      containers:
+      - name: my-app
+        image: my-app-image
+        volumeMounts:
+        - name: app-data
+          mountPath: /app
+        - name: app-config
+          mountPath: /app/config.yaml
+          subPath: config.yaml
+      volumes:
+      - name: app-data
+        emptyDir: {}
+      - name: app-config
+        configMap:
+          name: app-config

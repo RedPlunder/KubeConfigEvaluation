@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: router-fullname  # Assuming rendered fullname from Helm include
+  labels:
+    app.kubernetes.io/name: router
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP  # Changed from variable to explicit ClusterIP for internal-only access
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80  # Exposes service internally within the cluster
+      targetPort: 8180  # Targets the microservice port
+  selector:
+    app.kubernetes.io/name: router
+    app.kubernetes.io/instance: release-name

@@ -1,0 +1,48 @@
+workflowSpec:
+  serviceAccountName: "{{ .Values.serviceAccountName }}"
+  entrypoint: mother
+  templates:
+    - name: mother
+      dag:
+        tasks:
+          - name: main-job
+            template: main-job-step
+
+          - name: optional-job-one
+            dependencies: [main-job]
+            when: "{{`{{tasks.main-job.outputs.parameters.command}} == OPTION1 || {{tasks.main-job.outputs.parameters.command}} == BothOptions`}}"
+            templateRef:
+              name: master-templater
+              template: option-one-template
+            arguments:
+              parameters:
+                - name: argument-one
+                  value: "{{`{{tasks.main-job.outputs.parameters.argument-one}}`}}"
+                - name: argument-two
+                  value: "{{`{{tasks.main-job.outputs.parameters.argument-two}}`}}"
+
+          - name: optional-job-two
+            dependencies: [main-job]
+            when: "{{`{{tasks.main-job.outputs.parameters.command}} == OPTION2 || {{tasks.main-job.outputs.parameters.command}} == BothOptions`}}"
+            templateRef:
+              name: master-templater
+              template: option-two-template
+            arguments:
+              parameters:
+                - name: argument-one
+                  value: "{{`{{tasks.main-job.outputs.parameters.argument-one}}`}}"
+                - name: argument-two
+                  value: "{{`{{tasks.main-job.outputs.parameters.argument-two}}`}}"
+
+          - name: optional-job-three
+            dependencies: [optional-job-one, optional-job-two]
+            continueOn:
+              failed: true
+              error: true
+            templateRef:
+              name: master-templater
+              template: option-three-template
+            arguments:
+              parameters:
+                - name: argument-one
+                  value: "{{`{{tasks.main-job.outputs.parameters.argument-one}}`}}"

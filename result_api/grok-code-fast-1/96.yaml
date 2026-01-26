@@ -1,0 +1,46 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: ${NAME}
+  namespace: ${NAMESPACE}
+spec:
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+
+    # https://github.com/open-telemetry/opentelemetry-helm-charts/issues/23#issuecomment-910885716
+    processors:
+      batch: {}
+      memory_limiter:
+        check_interval: 5s
+        limit_percentage: 80
+        spike_limit_percentage: 25
+
+    exporters:
+      debug:
+        verbosity: basic
+      prometheusremotewrite:
+        endpoint: http://${PROMETHEUS_SERVICE}.${PROMETHEUS_NAMESPACE}.svc.cluster.local:9090/api/v1/otlp/v1/metrics
+        tls:
+          insecure: true
+        compression: gzip  # Added to specify gzip compression, as snappy is unsupported by Prometheus OTLP endpoint
+
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [debug]
+        metrics:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [debug, prometheusremotewrite]
+        logs:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [debug]

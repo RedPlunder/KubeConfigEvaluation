@@ -1,0 +1,14 @@
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: www-example-com
+spec:
+  host: graphql-api.mesh-external.example.com
+  trafficPolicy:
+    portLevelSettings:
+    - port:
+        number: 443
+      tls:
+        mode: SIMPLE
+        sni: graphql-api.mesh-external.example.com
+        credentialName: mesh-external-cert # Reference to a Kubernetes secret containing the CA cert

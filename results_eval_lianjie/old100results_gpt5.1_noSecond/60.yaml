@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: my-stateful-set
+spec:
+  serviceName: my-stateful-set
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: my-app
+          image: gcr.io/projectname/my-app:0.0.3
+          ports:
+            - containerPort: 80
+              name: http
+          volumeMounts:
+            - name: my-app-data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: my-app-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: "standard-rwo"  # must match PV storageClassName
+        resources:
+          requests:
+            storage: 50Gi

@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  # Rendered name from {{ include "router.fullname" . }}
+  name: router-service
+  labels:
+    # Rendered labels from {{ include "router.labels" . }}
+    app.kubernetes.io/name: router
+    app.kubernetes.io/instance: production
+spec:
+  # CHANGED: set to ClusterIP for internal-only access
+  type: ClusterIP
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      # REMOVED: nodePort: 30079 (Not valid/needed for internal ClusterIP services)
+      targetPort: 8180
+  selector:
+    # Rendered selector from {{ include "router.selectorLabels" . }}
+    app.kubernetes.io/name: router
+    app.kubernetes.io/instance: production

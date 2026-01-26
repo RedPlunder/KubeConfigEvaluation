@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: readiness-workaround-pod
+  labels:
+    app: example
+spec:
+  containers:
+  - name: app-container
+    image: nginx:1.21
+    ports:
+    - containerPort: 80
+    readinessProbe:
+      exec:
+        command:
+        - /bin/sh
+        - -c
+        - |
+          if [ ! -f /tmp/ready ]; then
+            # Perform initial readiness check (e.g., curl to localhost:80)
+            if curl -f http://localhost:80 > /dev/null 2>&1; then
+              touch /tmp/ready
+              exit 0
+            else
+              exit 1
+            fi
+          else
+            # After initial success, always return ready
+            exit 0
+          fi
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      failureThreshold: 3
+      successThreshold: 1
+      timeoutSeconds: 5
+  restartPolicy: Always

@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: auth0-report-cronjob
+  namespace: default
+spec:
+  schedule: "0 0 * * *"  # Example schedule; adjust as needed
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: auth0-report
+            image: your-auth0-image:latest  # Replace with your actual image
+            command: ["/home/cronrun/start.sh"]
+            args: ["tenant1", "legacy-db"]
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 1000  # Assuming non-root user ID from Dockerfile
+            resources:
+              requests:
+                memory: "128Mi"
+                cpu: "100m"
+              limits:
+                memory: "256Mi"
+                cpu: "200m"
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true

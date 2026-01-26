@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: output-appset
+  namespace: my-namespace
+spec:
+  generators:
+  - matrix:
+      generators:
+      - list:
+          elements:
+          - app: app1
+            path: deployment
+          - app: app1
+            path: service
+          - app: app1
+            path: serviceaccount
+          - app: app2
+            path: deployment
+          - app: app2
+            path: service
+          - app: app3
+            path: deployment
+  template:
+    metadata:
+      name: '{{app}}-{{path}}'
+      namespace: my-namespace
+    spec:
+      project: my-project
+      source:
+        repoURL: https://gitlab.com/gitlab/repo.git
+        targetRevision: HEAD
+        path: 'output/{{app}}/{{path}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: my-namespace
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true

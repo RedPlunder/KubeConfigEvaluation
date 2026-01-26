@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: penpot-exporter
+  namespace: penpot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: penpot-exporter
+  template:
+    metadata:
+      labels:
+        app: penpot-exporter
+    spec:
+      containers:
+        - name: penpot-exporter
+          image: penpotapp/exporter:latest
+          env:
+            - name: PENPOT_PUBLIC_URI
+              value: http://penpot-frontend
+          ports:
+            - containerPort: 6061

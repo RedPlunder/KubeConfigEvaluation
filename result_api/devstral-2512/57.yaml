@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webtest-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webtest
+  template:
+    metadata:
+      labels:
+        app: webtest
+    spec:
+      containers:
+      - name: webtest
+        image: registry.localhost:5000/webtest:dev-12345  # Unique tag
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80

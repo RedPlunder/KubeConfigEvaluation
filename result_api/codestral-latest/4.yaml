@@ -1,0 +1,33 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: restricted-access
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: "http://check-auth.default.svc.cluster.local:1221/review/request"
+    nginx.ingress.kubernetes.io/auth-response-headers: "Authorization"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "Access-Control-Allow-Origin: $http_origin";
+      more_set_headers "Access-Control-Allow-Credentials: true";
+      more_set_headers "Vary: Origin";
+      more_set_headers "Cookie: $http_cookie";
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: example.com
+    http:
+      paths:
+      - path: /path1/loc1/
+        pathType: Prefix
+        backend:
+          service:
+            name: page
+            port:
+              number: 80
+      - path: /path2/loc3/
+        pathType: Prefix
+        backend:
+          service:
+            name: page
+            port:
+              number: 80

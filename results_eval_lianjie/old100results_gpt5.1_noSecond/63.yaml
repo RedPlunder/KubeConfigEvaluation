@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: abc-cron-job
+  labels:
+    app: abc-cron-job
+spec:
+  schedule: "* * * * *"
+  concurrencyPolicy: Allow
+  startingDeadlineSeconds: 100
+  suspend: false
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: abc-cron-job
+        spec:
+          containers:
+            - name: abc-cron-job
+              image: busybox
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -c
+                - date; echo "hello from the kubernetes cluster"
+          restartPolicy: OnFailure

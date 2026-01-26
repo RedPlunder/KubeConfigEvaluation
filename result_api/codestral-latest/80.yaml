@@ -1,0 +1,11 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: my-test-job
+spec:
+  template:
+    spec:
+      containers:
+      - name: my-test-job
+        image: my-test-job:latest
+      restartPolicy: Never  # This will work for Jobs

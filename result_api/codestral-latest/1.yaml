@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftp1
+  labels:
+    app: ftp1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ftp1
+  template:
+    metadata:
+      labels:
+        app: ftp1
+    spec:
+      containers:
+      - name: ftp1
+        image: your-ftp-image:latest
+        stdin: true
+        tty: true
+        command: ["/bin/bash"]
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+  {{- include "commonMeta" . | nindent 2 }}
+data:
+  config.play.ts: |
+    const config = {
+      {{- range $key, $value := .Values.app.play }}
+      {{ $key }}: {{ if kindIs "string" $value | and (hasPrefix $value "*" | not) | and (hasSuffix $value "*" | not) }}{{ printf "%q" $value }}{{ else }}{{ $value }}{{ end }},
+      {{- end }}
+    };
+    export default config;

@@ -1,0 +1,20 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: allow-public-egress
+spec:
+  hosts:
+  - "*.amazonaws.com"
+  - "*.s3.amazonaws.com"
+  - "*.s3-*.amazonaws.com"
+  - "*.apk.alpinelinux.org"
+  - "*.alpinelinux.org"
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+  resolution: DNS
+  location: MESH_EXTERNAL

@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-application
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-application
+  template:
+    metadata:
+      labels:
+        app: my-application
+    spec:
+      containers:
+      - name: app
+        image: your-image:latest
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        startupProbe:
+          exec:
+            command:
+              - sh
+              - -c
+              - |
+                response=$(curl --silent --max-time 5 http://localhost:8080/v1/health)
+                echo "$response" | grep -qE '"status":"(healthy|undetermined)"'
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 10
+          failureThreshold: 18
+        livenessProbe:
+          exec:
+            command:
+              - sh
+              - -c
+              - |
+                response=$(curl --silent --max-time 5 http://localhost:8080/v1/health)
+                echo "$response" | grep -q '"status":"healthy"'
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+              - sh
+              - -c
+              - |
+                response=$(curl --silent --max-time 5 http://localhost:8080/v1/health)
+                echo "$response" | grep -q '"status":"healthy"'
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2

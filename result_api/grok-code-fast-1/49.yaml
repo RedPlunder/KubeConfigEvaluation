@@ -1,0 +1,11 @@
+grafana:
+  grafana.ini:
+    smtp:
+      enabled: true
+      host: smtp.sendgrid.net:587
+      user: apikey
+      password: decoded-sendgrid-api-key-value-here  # This is now the actual value from the secret
+      from_address: "my-from-address"
+      from_name: Grafana
+      skip_verify: false
+# ... other fields in your full values.yaml

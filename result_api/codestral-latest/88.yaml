@@ -1,0 +1,15 @@
+# Verify this matches the pod labels
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubernetes-learning-config-server
+  labels:
+    app: kubernetes-learning-config-server
+spec:
+  type: ClusterIP
+  selector:
+    app: kubernetes-learning-config-server  # Must match pod labels
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8888

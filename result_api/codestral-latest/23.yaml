@@ -1,0 +1,13 @@
+# This is a complete ConfigMap template that will persist across upgrades
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-content-config
+  annotations:
+    "helm.sh/resource-policy": keep
+data:
+  content.properties: |
+    {
+      "Enabled": {{ .Values.config.enabled | default false }},
+      "ApiEndpoint": "{{ .Values.config.apiEndpoint }}"
+    }

@@ -1,0 +1,158 @@
+# Fixed values.yaml configuration
+airflow:
+  airflow:
+    legacyCommands: false
+    image:
+      repository: apache/airflow
+      tag: 2.8.4-python3.9
+    executor: KubernetesExecutor
+    fernetKey: "7T512UXSSmBOkpWimFHIVb8jK6lfmSAvx4mO6Arehnc"
+    webserverSecretKey: "THIS IS UNSAFE!"
+    
+    # Configuration section to control Airflow Environment Variables
+    config:
+      AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "True"
+      AIRFLOW__CORE__LOAD_EXAMPLES: "True"
+      
+      # CRITICAL FIX 1: Increase pod creation batch size
+      # Default is 1. Increasing to 20 allows Airflow to spawn all tasks in one scheduler loop.
+      AIRFLOW__KUBERNETES__WORKER_PODS_CREATION_BATCH_SIZE: "24"
+      
+      # CRITICAL FIX 2: Ensure global parallelism allows enough concurrent processes
+      # Default is usually 32, but explicit setting prevents environment defaults from throttling.
+      AIRFLOW__CORE__PARALLELISM: "32"
+      
+      # CRITICAL FIX 3: Ensure per-DAG concurrency matches your max_active_tasks
+      AIRFLOW__CORE__MAX_ACTIVE_TASKS_PER_DAG: "20"
+
+    users:
+      - username: admin
+        password: admin
+        role: Admin
+        email: tom.mclean@myemail.com
+        firstName: admin
+        lastName: admin
+    connections: []
+    variables: []
+    pools: []
+    extraPipPackages: []
+    extraEnv: []
+    extraVolumeMounts: []
+    extraVolumes: []
+    kubernetesPodTemplate:
+      stringOverride: ""
+      # Tip: Ensure resources are small enough to fit multiple pods on your node.
+      # If requested CPU is too high, pods will stay in 'Pending' state.
+      resources: 
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+      extraPipPackages: []
+      extraVolumeMounts: []
+      extraVolumes: []
+  
+  # Ensure the scheduler has enough resources to manage the executor loop
+  scheduler:
+    replicas: 1
+    resources: 
+      requests:
+        cpu: "200m"
+        memory: "256Mi"
+    logCleanup:
+      enabled: true
+      retentionMinutes: 21600
+    livenessProbe:
+      enabled: true
+    taskCreationCheck:
+      enabled: false
+      thresholdSeconds: 300
+      schedulerAgeBeforeCheck: 180
+
+  # ... (Rest of your configuration remains unchanged)
+  web:
+    replicas: 1
+    resources: {}
+    service:
+      type: ClusterIP
+      externalPort: 8080
+    webserverConfig:
+      stringOverride: |
+        from airflow import configuration as conf
+        from flask_appbuilder.security.manager import AUTH_DB
+        SQLALCHEMY_DATABASE_URI = conf.get("core", "SQL_ALCHEMY_CONN")
+        AUTH_TYPE = AUTH_DB
+      existingSecret: ""
+  
+  workers:
+    enabled: false
+
+  triggerer:
+    enabled: true
+    replicas: 1
+    resources: {}
+    capacity: 1000
+
+  flower:
+    enabled: false
+
+  logs:
+    path: /opt/airflow/logs
+    persistence:
+      enabled: false
+
+  dags:
+    path: /opt/airflow/dags
+    persistence:
+      enabled: false
+    gitSync:
+      enabled: true
+      repo: "https://tom.mclean:mypassword@dev.azure.com/MyOrg/MyOrg/_git/Airflow"
+      branch: "main"
+      revision: "HEAD"
+      syncWait: 60
+      depth: 1
+      repoSubPath: "dags"
+      cloneDepth: 1
+      httpSecret: "airflow-http-git-secret"
+      httpSecretUsernameKey: username
+      httpSecretPasswordKey: password
+
+  ingress:
+    enabled: true
+    web:
+      host: airflow.mydomain.com
+      annotations:
+        kubernetes.io/ingress.class: alb
+        alb.ingress.kubernetes.io/group.name: grafana
+        alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
+        alb.ingress.kubernetes.io/scheme: internet-facing
+        alb.ingress.kubernetes.io/ssl-redirect: '443'
+        alb.ingress.kubernetes.io/target-type: ip
+
+  serviceAccount:
+    create: true
+    name: ""
+    annotations: {}
+
+  extraManifests: []
+
+  pgbouncer:
+    enabled: true
+    resources: {}
+    authType: md5
+
+  postgresql:
+    enabled: true
+    persistence:
+      enabled: true
+      storagClass: ""
+      size: 8Gi
+
+  externalDatabase:
+    type: postgres
+
+  redis:
+    enabled: false
+
+  externalRedis:
+    host: localhost

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: telemetry-asterix-adapter-svc
+  namespace: utm
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+    service.beta.kubernetes.io/azure-load-balancer-type: "standard"
+spec:
+  type: LoadBalancer
+  selector:
+    app: telemetry-asterix-adapter
+  ports:
+    - name: udp-port
+      protocol: UDP
+      port: 1025
+      targetPort: 6000
+  externalTrafficPolicy: Local

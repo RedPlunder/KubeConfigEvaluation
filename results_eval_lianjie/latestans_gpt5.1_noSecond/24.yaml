@@ -1,0 +1,103 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: reportportal-rabbitmq-analyzer-bootstrap
+  namespace: reportportal
+  labels:
+    app.kubernetes.io/name: reportportal-rabbitmq-analyzer-bootstrap
+    app.kubernetes.io/part-of: reportportal
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: reportportal-rabbitmq-analyzer-bootstrap
+        app.kubernetes.io/part-of: reportportal
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: rabbitmq-bootstrap
+          image: rabbitmq:3.13-management
+          imagePullPolicy: IfNotPresent
+          env:
+            # Adjust these to match your actual RabbitMQ credentials and host
+            - name: RABBITMQ_HOST
+              value: "reportportal-rabbitmq.reportportal.svc.cluster.local"
+            - name: RABBITMQ_PORT
+              value: "5672"
+            - name: RABBITMQ_USER
+              valueFrom:
+                secretKeyRef:
+                  name: reportportal-rabbitmq
+                  key: rabbitmq-username
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: reportportal-rabbitmq
+                  key: rabbitmq-password
+            # Vhost and exchange expected by the analyzer
+            - name: RABBITMQ_VHOST
+              value: "analyzer"
+            - name: ANALYZER_EXCHANGE
+              value: "analyzer-default"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+
+              echo "Waiting for RabbitMQ at ${RABBITMQ_HOST}:${RABBITMQ_PORT}..."
+              # Simple TCP wait loop
+              for i in $(seq 1 60); do
+                if nc -z "${RABBITMQ_HOST}" "${RABBITMQ_PORT}"; then
+                  echo "RabbitMQ is reachable."
+                  break
+                fi
+                echo "RabbitMQ not reachable yet, retrying (${i}/60)..."
+                sleep 5
+              done
+
+              # Create vhost if it does not exist
+              echo "Ensuring vhost '${RABBITMQ_VHOST}' exists..."
+              rabbitmqctl -n rabbit@localhost status >/dev/null 2>&1 || true
+
+              # Use HTTP API via curl to manage vhost and exchange
+              # Management API is on port 15672 by default
+              API_URL="http://${RABBITMQ_HOST}:15672/api"
+
+              echo "Checking/creating vhost '${RABBITMQ_VHOST}' via HTTP API..."
+              if ! curl -s -u "${RABBITMQ_USER}:${RABBITMQ_PASSWORD}" \
+                   "${API_URL}/vhosts/${RABBITMQ_VHOST}" | grep -q "\"name\":\"${RABBITMQ_VHOST}\""; then
+                echo "Vhost '${RABBITMQ_VHOST}' not found. Creating..."
+                curl -s -u "${RABBITMQ_USER}:${RABBITMQ_PASSWORD}" \
+                     -H "content-type: application/json" \
+                     -X PUT \
+                     "${API_URL}/vhosts/${RABBITMQ_VHOST}" \
+                     -d '{}' || {
+                  echo "Failed to create vhost '${RABBITMQ_VHOST}'"
+                  exit 1
+                }
+              else
+                echo "Vhost '${RABBITMQ_VHOST}' already exists."
+              fi
+
+              echo "Ensuring user '${RABBITMQ_USER}' has permissions on vhost '${RABBITMQ_VHOST}'..."
+              curl -s -u "${RABBITMQ_USER}:${RABBITMQ_PASSWORD}" \
+                   -H "content-type: application/json" \
+                   -X PUT \
+                   "${API_URL}/permissions/${RABBITMQ_VHOST}/${RABBITMQ_USER}" \
+                   -d '{"configure":".*","write":".*","read":".*"}' >/dev/null
+
+              echo "Checking/creating exchange '${ANALYZER_EXCHANGE}' in vhost '${RABBITMQ_VHOST}'..."
+              # Declare a durable direct exchange (adjust type if ReportPortal requires topic/fanout)
+              curl -s -u "${RABBITMQ_USER}:${RABBITMQ_PASSWORD}" \
+                   -H "content-type: application/json" \
+                   -X PUT \
+                   "${API_URL}/exchanges/${RABBITMQ_VHOST}/${ANALYZER_EXCHANGE}" \
+                   -d '{"type":"direct","durable":true,"auto_delete":false,"internal":false,"arguments":{}}' || {
+                echo "Failed to create exchange '${ANALYZER_EXCHANGE}'"
+                exit 1
+              }
+
+              echo "Exchange '${ANALYZER_EXCHANGE}' in vhost '${RABBITMQ_VHOST}' is ready."
+              echo "Bootstrap completed successfully."

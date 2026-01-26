@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-proxy
+  namespace: your-namespace
+spec:
+  selector:
+    app: kafka
+  ports:
+    - name: proxy
+      port: 19097
+      targetPort: 19097

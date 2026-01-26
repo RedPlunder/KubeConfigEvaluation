@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-a
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: service-a
+  template:
+    metadata:
+      labels:
+        app: service-a
+    spec:
+      containers:
+        - name: service-a
+          image: registry.k8s.io/busybox
+          command: ["sh", "-c", "sleep 3600"]
+          env:
+            - name: SHARED_SECRET_VALUE
+              valueFrom:
+                secretKeyRef:
+                  name: shared-secret
+                  key: password

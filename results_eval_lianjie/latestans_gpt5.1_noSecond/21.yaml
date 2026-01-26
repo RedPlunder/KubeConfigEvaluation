@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+  namespace: default
+  labels:
+    app: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: my-registry/my-frontend:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          # Import all keys from the ConfigMap as env vars
+          envFrom:
+            - configMapRef:
+                name: frontend-config
+          # Example of adding other explicit env vars if needed
+          env:
+            - name: NODE_ENV
+              value: "production"
+      restartPolicy: Always

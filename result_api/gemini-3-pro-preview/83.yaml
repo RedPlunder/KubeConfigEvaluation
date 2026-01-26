@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: srsran-application-shell
+  labels:
+    app: srsran
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: srsran
+  template:
+    metadata:
+      labels:
+        app: srsran
+    spec:
+      containers:
+        - name: srsran-cu-du
+          # Replace with your actual image
+          image: srsran/srsran-project:latest 
+          ports:
+            - containerPort: 5000
+          lifecycle:
+            postStart:
+              exec:
+                # Use /bin/sh -c to run the command string with shell parsing
+                command: 
+                  - "/bin/sh"
+                  - "-c"
+                  - "curl -H 'Content-Type: application/json' -d '{\"restarted\": true}' -X POST http://localhost:5000/restarted"

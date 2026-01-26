@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jobsink-ingress
+  namespace: jobsink-demo
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    # Add your ingress controller specific annotations
+spec:
+  ingressClassName: nginx  # Change to your ingress class
+  rules:
+  - host: jobsink.example.com  # Change to your domain
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: my-jobsink  # JobSink creates a service with this name
+            port:
+              number: 80

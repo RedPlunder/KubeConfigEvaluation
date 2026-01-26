@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: apps-ingress-private
+  namespace: app1-namespace
+  labels:
+    app.kubernetes.io/name: app1
+    app.kubernetes.io/instance: app1
+  annotations:
+    kubernetes.io/ingress.class: hybrid-internal
+    nginx.ingress.kubernetes.io/backend-protocol: "http"
+spec:
+  tls:
+    - hosts:
+        - "apps.internal.test.cluster"
+      secretName: app1-tls
+  rules:
+    - host: "apps.internal.test.cluster"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: app1
+                port:
+                  name: http

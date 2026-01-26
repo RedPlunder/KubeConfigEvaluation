@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-api
+  namespace: default
+  labels:
+    app: django-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: django-api
+  template:
+    metadata:
+      labels:
+        app: django-api
+    spec:
+      containers:
+        - name: django
+          image: gcr.io/your-project/django-api:latest
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: DJANGO_SETTINGS_MODULE
+              value: "your_project.settings.production"
+            - name: ALLOWED_HOSTS
+              value: "www.my-api-url.com"
+            - name: USE_X_FORWARDED_HOST
+              value: "True"
+            - name: SECURE_PROXY_SSL_HEADER
+              value: "HTTP_X_FORWARDED_PROTO,https"
+            - name: FORCE_SCRIPT_NAME
+              value: ""
+            # Force the domain for URL building
+            - name: DJANGO_BASE_URL
+              value: "https://www.my-api-url.com"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health/
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health/
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 5

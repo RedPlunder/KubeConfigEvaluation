@@ -1,0 +1,7 @@
+# app-test/values-dev.yaml
+app:
+  # Override subchart values here
+  replicaCount: 2
+  image:
+    tag: "dev"
+  # ... other fields from app/values-dev.yaml

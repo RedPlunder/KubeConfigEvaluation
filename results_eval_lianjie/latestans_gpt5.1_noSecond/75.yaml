@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cassandra
+  labels:
+    app: cassandra
+spec:
+  serviceName: cassandra
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cassandra
+  template:
+    metadata:
+      labels:
+        app: cassandra
+    spec:
+      containers:
+        - name: cassandra
+          image: sevabek/cassandra:latest
+          ports:
+            - containerPort: 9042
+              name: cql
+          volumeMounts:
+            - mountPath: /var/lib/cassandra
+              name: cassandra-storage
+          livenessProbe:
+            exec:
+              command:
+                - cqlsh
+                - -e
+                - "SELECT release_version FROM system.local;"
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 2
+          resources:
+            requests:
+              # Request enough to run reliably, but not the whole node
+              memory: "3Gi"
+              cpu: "1500m"
+            limits:
+              # Leave headroom for OS and Kubernetes components
+              memory: "3500Mi"
+              cpu: "1800m"
+  volumeClaimTemplates:
+    - metadata:
+        name: cassandra-storage
+        labels:
+          app: cassandra
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 3Gi

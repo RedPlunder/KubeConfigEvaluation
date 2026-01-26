@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ftp1
+  namespace: default
+spec:
+  containers:
+  - name: ftp1
+    image: busybox:latest
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do sleep 30; done"]
+    stdin: true
+    tty: true
+  restartPolicy: Never

@@ -1,0 +1,6 @@
+type: kubernetes
+icon: kubernetes
+source:
+  insecure_skip_tls_verify: false
+  kubeconfig: {{kubernetes-config}}
+  skip_readiness_checks: true  # This is a hypothetical configuration - actual implementation may vary

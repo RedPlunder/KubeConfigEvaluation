@@ -1,0 +1,94 @@
+apiVersion: concourse-ci.org/v1alpha1
+kind: Pipeline
+metadata:
+  name: video-buffer-detect-pipeline
+spec:
+  resources:
+    - name: bufferautomationsourcecode
+      type: git
+      source:
+        uri: https://example.com/bufferautomationsourcecode.git
+        branch: Dev
+
+    - name: docker_hub_details_capability_development
+      type: registry-image
+      source:
+        repository: example.com/video-buffer-detect-app
+        tag: latest
+
+    - name: version
+      type: semver
+      source:
+        driver: git
+        uri: https://example.com/version-repo.git
+        branch: main
+        file: version
+
+    - name: concoursesourcecode
+      type: git
+      source:
+        uri: https://example.com/concoursesourcecode.git
+        branch: main
+
+  jobs:
+    - name: deploy_capability_docker_kubernetes
+      plan:
+        - get: bufferautomationsourcecode
+        - get: docker_hub_details_capability_development
+          passed: [build_deploy_hub]
+          trigger: true
+        - get: version
+        - get: concoursesourcecode
+        - task: update_deploymentfile_git
+          file: concoursesourcecode/task/kubernetes_fileupdate_task_parameterized1.yaml
+          params:
+            BRANCH: "Dev"
+            SOURCE_CODE: "bufferautomationsourcecode"
+
+        # New task: run kubectl directly, no implicit "wait for all pods"
+        - task: deploy-to-kubernetes
+          privileged: true
+          config:
+            platform: linux
+            image_resource:
+              type: registry-image
+              source:
+                repository: bitnami/kubectl
+                tag: "latest"
+            params:
+              KUBECONFIG_CONTENT: ((kubernetes-config))
+              NAMESPACE: videoautomationcapabilities
+            inputs:
+              - name: bufferautomationsourcecode
+            run:
+              path: /bin/sh
+              args:
+                - -ce
+                - |
+                  # Write kubeconfig from param
+                  mkdir -p /root/.kube
+                  echo "$KUBECONFIG_CONTENT" > /root/.kube/config
+
+                  echo "Current context:"
+                  kubectl config current-context
+
+                  echo "Existing pods with app=video-buffer-detect-app:"
+                  kubectl get pods -l app=video-buffer-detect-app -n "$NAMESPACE"
+
+                  echo "All pods in namespace (for info only):"
+                  kubectl get pods -n "$NAMESPACE" --show-labels
+
+                  echo "Applying deployment manifest..."
+                  kubectl apply -f bufferautomationsourcecode/kubernetes/Dev/Deployment.yaml -n "$NAMESPACE"
+
+                  echo "Waiting only for video-buffer-detect-app pods to be Ready..."
+                  kubectl wait \
+                    --for=condition=Ready \
+                    pod -l app=video-buffer-detect-app \
+                    -n "$NAMESPACE" \
+                    --timeout=300s
+
+                  echo "Checking rollout status for deployment/video-buffer-detect-app..."
+                  kubectl rollout status deployment/video-buffer-detect-app -n "$NAMESPACE" --timeout=300s
+
+                  echo "Deployment completed successfully."

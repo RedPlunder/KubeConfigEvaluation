@@ -1,0 +1,19 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: production-app-route
+  namespace: default
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`myapp.example.com`)
+      kind: Rule
+      services:
+        - name: my-legacy-service
+          port: 8080
+      middlewares:
+        - name: retry-with-timeout
+        - name: circuit-breaker
+  tls:
+    secretName: myapp-tls

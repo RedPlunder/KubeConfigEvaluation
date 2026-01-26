@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ollama
+spec:
+  serviceName: ollama
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+    spec:
+      containers:
+      - name: ollama
+        image: ollama/ollama:latest
+        env:
+        - name: MODELS
+          value: "llama3.2,phi3"
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          /bin/ollama serve &
+          sleep 10
+          IFS=',' read -ra models <<< "$MODELS"
+          for model in "${models[@]}"; do
+            echo "Pulling model: $model"
+            /bin/ollama pull "$model"
+          done
+          wait
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+        volumeMounts:
+        - name: ollama-data
+          mountPath: /root/.ollama
+      volumes:
+      - name: ollama-data
+        persistentVolumeClaim:
+          claimName: ollama-pvc

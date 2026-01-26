@@ -1,0 +1,9 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "example.fullname" . }}
+  labels:
+    {{- include "example.labels" . | nindent 4 }}
+data:
+  file.yaml: |-
+    {{- .Values.configFiles."file.yaml" | toYaml | nindent 4 }}

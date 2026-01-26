@@ -1,0 +1,45 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: core
+  namespace: argo-cd
+  labels:
+    app.kubernetes.io/managed-by: Helm
+spec:
+  goTemplate: true
+  generators:
+    - git:
+        repoURL: https://mygitrepo.git
+        revision: HEAD
+        directories:
+          - path: kubernetes-deployments/core/*
+  template:
+    metadata:
+      # 'path.basename' extracts the folder name (e.g., 'cilium')
+      name: '{{ .path.basename }}'
+      labels: {}
+    spec:
+      project: default
+      source:
+        repoURL: https://mygitrepo.git
+        targetRevision: HEAD
+        # Corrected variable from 'path.path' to '.path'
+        path: '{{ .path }}'
+        helm:
+          valueFiles:
+            - values.yaml
+      destination:
+        server: https://kubernetes.default.svc
+        # Uses the folder name as the target namespace
+        namespace: '{{ base .path }}'
+      revisionHistoryLimit: 5
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - ApplyOutOfSyncOnly=true
+          - CreateNamespace=true
+          - RespectIgnoreDifferences=true
+          - PruneLast=true
+      ignoreDifferences: []

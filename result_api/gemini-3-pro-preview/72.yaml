@@ -1,0 +1,20 @@
+apiVersion: external-secrets.io/v1beta1
+kind: SecretStore
+metadata:
+  name: azure-keyvault-workload-id
+  namespace: default
+spec:
+  provider:
+    azure:
+      vaultUrl: "https://my.vault.azure.net"
+      auth:
+        # Switch from ManagedIdentity to WorkloadIdentity
+        type: WorkloadIdentity
+        # In this mode, ESO uses the ServiceAccount token projected into the pod
+        # to authenticate with Azure Entra ID.
+        workloadIdentity:
+          # The ServiceAccount used by the External Secrets Operator controller pod
+          # must be annotated with: azure.workload.identity/client-id: <YOUR-CLIENT-ID>
+          serviceAccountRef:
+            name: external-secrets-sa
+            namespace: external-secrets

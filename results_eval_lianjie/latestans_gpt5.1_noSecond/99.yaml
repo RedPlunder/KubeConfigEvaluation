@@ -1,0 +1,39 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ms-ingress
+  namespace: code-oss
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Example of adding headers should use a ConfigMap; this is left as-is but
+    # refer to ingress-nginx docs for correct usage if needed.
+    nginx.ingress.kubernetes.io/enable-access-log: "true"
+    nginx.ingress.kubernetes.io/enable-debug: "true"
+    nginx.ingress.kubernetes.io/proxy-buffering: "on"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - example.com
+      secretName: ms-app-tls
+  rules:
+    - host: example.com
+      http:
+        paths:
+          - path: /vfb-pod-one(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: vfb-pod-one
+                port:
+                  number: 8000
+          - path: /(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: vfb-pod-one
+                port:
+                  number: 8000

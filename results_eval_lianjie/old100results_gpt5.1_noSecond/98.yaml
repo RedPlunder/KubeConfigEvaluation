@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-password
+  namespace: default
+  labels:
+    app.kubernetes.io/name: my-app
+    app.kubernetes.io/part-of: my-app-suite
+type: Opaque
+immutable: true
+data:
+  # This value should be generated once and kept stable.
+  # Example: echo -n 'your-32-char-password' | base64
+  password: eW91ci0zMi1jaGFyLXBhc3N3b3Jk

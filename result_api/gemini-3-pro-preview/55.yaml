@@ -1,0 +1,15 @@
+# 2. DestinationRule for Internal Mesh Workloads (TLS Passthrough)
+# This should be in the namespace of your internal workloads (e.g., 'default').
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: external-svc-graphql-mesh
+  namespace: default
+spec:
+  host: graphql-api.mesh-external.example.com
+  trafficPolicy:
+    portLevelSettings:
+    - port:
+        number: 443
+      tls:
+        mode: PASSTHROUGH

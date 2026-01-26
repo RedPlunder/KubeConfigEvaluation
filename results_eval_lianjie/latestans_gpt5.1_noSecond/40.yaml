@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-with-secret-subdir
+  namespace: default
+spec:
+  # Disable automounting service account token if not needed
+  automountServiceAccountToken: false
+  containers:
+    - name: app-container
+      image: nginx:1.27-alpine
+      # Your app still uses /app; /app/conf will contain secrets
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          echo "Listing /app (image content):"
+          ls -R /app || echo "/app does not exist in image"
+          echo "Listing /app/conf (mounted secrets):"
+          ls -R /app/conf || echo "/app/conf empty"
+          sleep 3600
+      volumeMounts:
+        - name: app-config
+          mountPath: /app/conf
+          readOnly: true
+  volumes:
+    - name: app-config
+      secret:
+        secretName: app-config-secret
+        # Optional: set default file mode for all keys
+        defaultMode: 0400
+        # Optional: project only specific keys and paths
+        items:
+          - key: username
+            path: username
+          - key: password
+            path: password

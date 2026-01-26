@@ -1,0 +1,14 @@
+# Recreate or move the Certificate and Secret to istio-system for the gateway to access it.
+# Assuming cert-manager is used, update the Certificate namespace.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: star-customer-ocs-nu
+  namespace: istio-system
+spec:
+  secretName: star-customer-ocs-nu-crt
+  issuerRef:
+    name: letsencrypt-prod
+    kind: Issuer
+  dnsNames:
+  - "*.customer.ocs.nu"

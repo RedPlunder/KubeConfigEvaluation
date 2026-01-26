@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jetty
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jetty
+  template:
+    metadata:
+      labels:
+        app: jetty
+    spec:
+      containers:
+        - name: jetty
+          image: quay.io/user/jetty
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: config-properties
+              mountPath: "/opt/jetty/config.properties"
+              subPath: config.properties
+            - name: secrets-properties
+              mountPath: "/opt/jetty/secrets.properties"
+              subPath: secrets.properties   # mount a single key as a file
+            - name: doc-path
+              mountPath: /mnt/storage/
+          resources:
+            limits:
+              cpu: "1000m"
+              memory: "3000Mi"
+            requests:
+              cpu: "750m"
+              memory: "2500Mi"
+      volumes:
+        - name: config-properties
+          configMap:
+            name: jetty-config-properties
+        - name: secrets-properties
+          secret:
+            secretName: jetty-secrets
+        - name: doc-path
+          persistentVolumeClaim:
+            claimName: jetty-docs-pvc
+      imagePullSecrets:
+        - name: rcc-quay

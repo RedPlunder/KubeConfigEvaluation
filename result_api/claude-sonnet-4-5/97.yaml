@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: windows-app-deployment
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: windows-app
+  template:
+    metadata:
+      labels:
+        app: windows-app
+    spec:
+      containers:
+      - name: windows-app
+        image: mcr.microsoft.com/windows/servercore:ltsc2022
+        command:
+        - powershell.exe
+        - -Command
+        - |
+          # Import certificate from secret
+          $certPath = "C:\certs\certificate.pfx"
+          $certPassword = ConvertTo-SecureString -String "" -AsPlainText -Force
+          
+          if (Test-Path $certPath) {
+            try {
+              $cert = Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\LocalMachine\My -Password $certPassword -Exportable
+              Write-Host "Certificate imported with thumbprint: $($cert.Thumbprint)"
+            } catch {
+              Write-Error "Failed to import certificate: $_"
+              exit 1
+            }
+          } else {
+            Write-Error "Certificate file not found at $certPath"
+            exit 1
+          }
+          
+          # Start your application here
+          Write-Host "Application starting..."
+          while ($true) { Start-Sleep -Seconds 3600 }
+        volumeMounts:
+        - name: cert-volume
+          mountPath: "C:\\certs"
+          readOnly: true
+        env:
+        - name: CERT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: windows-cert-secret
+              key: password
+              optional: true
+      volumes:
+      - name: cert-volume
+        secret:
+          secretName: windows-cert-secret
+      nodeSelector:
+        kubernetes.io/os: windows

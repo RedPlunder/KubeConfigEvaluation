@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: restart-runners-env
+  namespace: jp-test
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      template:
+        spec:
+          serviceAccountName: default
+          restartPolicy: OnFailure
+          containers:
+            - name: kubectl-runner
+              # Example image that contains kubectl; replace with your preferred image
+              image: bitnami/kubectl:latest
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -c
+              args:
+                - >
+                  kubectl patch deployment runners
+                  -n jp-test
+                  --type merge
+                  -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"jp-runner\",\"env\":[{\"name\":\"start_time\",\"value\":\"$(date +%s)\"}]}]}}}}"

@@ -1,0 +1,46 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "Cache-Control: no-store";
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "false"
+    nginx.ingress.kubernetes.io/cors-allow-headers: Authorization, Content-Type
+    nginx.ingress.kubernetes.io/cors-allow-methods: GET, POST, PUT, DELETE, OPTIONS
+    nginx.ingress.kubernetes.io/cors-allow-origin: https://<host>,http://localhost:3000
+    nginx.ingress.kubernetes.io/cors-max-age: "3600"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: 64k
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.org/proxy-pass-headers: IDAM_USER,IDAM-USER
+    nginx.org/server-tokens: "False"
+    # Use dedicated header annotation instead of snippet
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "Cache-Control: no-store";
+    nginx.ingress.kubernetes.io/server-snippet: |
+      add_header Content-Security-Policy "default-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.pendo.io https://*.storage.googleapis.com; img-src 'self' https://*.pendo.io data:;frame-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.pendo.io https://*.storage.googleapis.com blob: data:;object-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.pendo.io https://*.storage.googleapis.com blob: data:;";
+  labels:
+    app: <release-name>
+    app.kubernetes.io/managed-by: Helm
+  name: <release-name>
+  namespace: <namespace>
+spec:
+  ingressClassName: <ingressclass-name>
+  rules:
+  - host: <host>
+    http:
+      paths:
+      - backend:
+          service:
+            name: <release-name>
+            port:
+              number: 80
+        path: /(.*)
+        pathType: Prefix
+  tls:
+  - hosts:
+    - <host>
+    secretName: <secret-name>

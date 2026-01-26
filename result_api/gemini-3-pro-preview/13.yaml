@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: combined-output-apps
+  namespace: my-namespace
+spec:
+  project: my-project
+  source:
+    repoURL: https://gitlab.com/gitlab/repo.git
+    targetRevision: HEAD
+    # Point to the parent directory containing all app folders
+    path: output
+    # The fix: This will find manifests in output/app1/deployment, output/app2/service, etc.
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    # All resources will be deployed to this namespace
+    namespace: my-namespace
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

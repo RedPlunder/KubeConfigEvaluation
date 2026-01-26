@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ollama
+  namespace: default
+spec:
+  serviceName: ollama
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+    spec:
+      runtimeClassName: nvidia  # Enable Nvidia GPU runtime (requires Nvidia device plugin on cluster)
+      containers:
+      - name: ollama
+        image: your-custom-ollama-image:latest  # Replace with image built from Solution1's Dockerfile
+        ports:
+        - containerPort: 11434
+          name: http
+        env:
+        - name: MODELS
+          value: "llama3.2,another-model"  # Comma-separated list of models to pull
+        volumeMounts:
+        - name: ollama-data
+          mountPath: /root/.ollama
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - bash
+              - -c
+              - |
+                # Wait for Ollama to be ready (up to 10 retries)
+                for i in $(seq 1 10); do
+                  if ollama ps >/dev/null 2>&1; then
+                    break
+                  fi
+                  sleep 2
+                done
+                # Pull models if Ollama is ready
+                if ollama ps >/dev/null 2>&1; then
+                  for model in ${MODELS//,/ }; do
+                    ollama pull "$model"
+                  done
+                else
+                  echo "Ollama not ready after retries" >&2
+                  exit 1
+                fi
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1"
+            nvidia.com/gpu: 1  # Request 1 GPU (adjust as needed)
+          limits:
+            memory: "4Gi"
+            cpu: "2"
+            nvidia.com/gpu: 1
+      - name: fluentd  # Assuming this is a sidecar for logging, kept as in original
+        image: fluent/fluentd:latest
+        # Add fluentd config if needed
+  volumeClaimTemplates:
+  - metadata:
+    name: ollama-data
+  spec:
+    accessModes: ["ReadWriteOnce"]
+    resources:
+      requests:
+        storage: 50Gi  # Adjust storage size for models
+    storageClassName: standard  # Use appropriate storage class

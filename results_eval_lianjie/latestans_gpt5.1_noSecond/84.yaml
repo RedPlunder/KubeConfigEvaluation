@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: core-applications
+  namespace: argo-cd
+spec:
+  generators:
+    - git:
+        repoURL: https://mygitrepo.git
+        revision: HEAD
+        directories:
+          - path: kubernetes-deployments/core/*
+  template:
+    metadata:
+      name: '{{path.basename}}'
+      labels: {}
+    spec:
+      project: default
+      source:
+        repoURL: https://mygitrepo.git
+        targetRevision: HEAD
+        path: '{{path.path}}'
+        helm:
+          valueFiles:
+            - values.yaml
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{path.basename}}'
+      revisionHistoryLimit: 5
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - ApplyOutOfSyncOnly=true
+          - CreateNamespace=true
+          - RespectIgnoreDifferences=true
+          - PruneLast=true
+      ignoreDifferences: []

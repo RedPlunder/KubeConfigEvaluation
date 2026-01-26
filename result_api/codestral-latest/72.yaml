@@ -1,0 +1,14 @@
+apiVersion: external-secrets.io/v1beta1
+kind: SecretStore
+metadata:
+  name: azure-keyvault-store
+  namespace: default
+spec:
+  provider:
+    azurekv:
+      authType: ManagedIdentity
+      vaultUrl: "https://my.vault.azure.net"
+      identityId: "<your-managed-identity-client-id>"  # Must match the assigned identity
+      serviceAccountRef:
+        name: external-secrets-sa
+        namespace: external-secrets

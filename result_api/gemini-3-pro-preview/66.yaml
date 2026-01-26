@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: well-known-ingress
+  namespace: app
+  annotations:
+    # Use your specific cluster issuer
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    # Enable Regex matching
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    # Ensure this block handles the traffic but allows the other ingress to handle the root
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+      - app.my-domain.net
+      secretName: app-tls
+  rules:
+  - host: app.my-domain.net
+    http:
+      paths:
+      # We use ImplementationSpecific to allow the dot in the path
+      # Regex: Starts with /.well-known/, capturing the rest in group $1
+      - path: ^/\.well-known/(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: well-known-static-resources
+            port:
+              number: 80

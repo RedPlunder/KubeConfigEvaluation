@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: telemetry-asterix-adapter-svc
+  namespace: utm
+  annotations:
+    # Optional: If the root path '/' on port 8080 returns 404, you can specify a health path
+    # service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: "/actuator/health"
+spec:
+  type: LoadBalancer
+  # 'Cluster' is more robust for availability; 'Local' preserves client Source IP but requires Pod to be on the node hit by LB.
+  externalTrafficPolicy: Cluster
+  loadBalancerSourceRanges:
+    - 71.###.###.###/32
+    - 71.###.###.###/32
+  selector:
+    app: telemetry-asterix-adapter
+  ports:
+    - name: udp-data
+      protocol: UDP
+      port: 1025          # The external port the Sensor sends data to
+      targetPort: 6000    # The internal port Netty is listening on
+    - name: tcp-health    # REQUIRED: Allows Azure LB to verify the pod is running via TCP
+      protocol: TCP
+      port: 8080
+      targetPort: 8080

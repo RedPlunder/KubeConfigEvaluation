@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-env-js
+data:
+  env.js: |
+    window.env = { "API_URL": "http://ip:port" }

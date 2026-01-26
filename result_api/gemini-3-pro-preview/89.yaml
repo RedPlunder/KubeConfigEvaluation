@@ -1,0 +1,28 @@
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: gateway
+  namespace: istio-ingress
+spec:
+  selector:
+    istio: gateway
+  servers:
+  - port:
+      name: http
+      number: 80
+      protocol: HTTP
+    hosts:
+    - "*.customer.ocs.nu"
+    tls:
+      httpsRedirect: true
+  - port:
+      name: https
+      number: 443
+      protocol: HTTPS
+    hosts:
+    - "*.customer.ocs.nu"
+    tls:
+      mode: SIMPLE
+      # FIXED: Use only the secret name. Do not include the namespace prefix "istio-ingress/".
+      # The secret must exist in the same namespace as the ingress gateway pod.
+      credentialName: star-customer-ocs-nu-crt

@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: python-code
+  namespace: default
+data:
+  main.py: |
+    import os
+    import psutil
+    import sys
+    
+    # Use psutil to monitor and enforce memory limit
+    limit_mb = int(os.getenv("MEMORY_LIMIT_MB", "500"))
+    limit_bytes = limit_mb * 1024 * 1024
+    process = psutil.Process()
+    
+    print(f"Memory limit set to {limit_mb} MB")
+    try:
+      while True:
+        mem_usage = process.memory_info().rss
+        if mem_usage > limit_bytes:
+          raise MemoryError("Memory usage exceeded limit")
+        # Simulate work
+        data = bytearray(10 * 1024 * 1024)  # Allocate 10 MB chunks
+        if len(data) > 400 * 1024 * 1024:  # Break after ~400MB
+          break
+      print("Memory allocation successful")
+    except MemoryError as e:
+      print(f"MemoryError caught: {e}")
+      sys.exit(1)  # Handle gracefully

@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-java-app
+  labels:
+    app: test-java-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-java-app
+  template:
+    metadata:
+      labels:
+        app: test-java-app
+    spec:
+      containers:
+      - name: test-java-service
+        # Replace with your actual image
+        image: openjdk:17-jdk-slim
+        # We invoke the shell to parse the string containing spaces.
+        command: 
+          - /bin/sh
+          - -c
+        # The entire command is passed as a single string to the shell.
+        # The shell performs word splitting, so Java receives separate arguments.
+        args:
+          - "java -Xmx256m -XX:MetaspaceSize=64m -XX:+UseSerialGC -jar java_j.jar"
+        ports:
+          - containerPort: 8080
+            name: http

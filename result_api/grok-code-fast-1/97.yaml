@@ -1,0 +1,27 @@
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: akv-cert-provider
+  namespace: default
+spec:
+  provider: azure
+  parameters:
+    usePodIdentity: "true"  # Assumes Workload Identity or Pod Identity is configured for AKV access
+    keyvaultName: "your-akv-name"  # Replace with your AKV name
+    objects: |
+      array:
+        - |
+          objectName: "your-cert-name"  # Replace with your PFX secret name in AKV
+          objectType: secret
+        - |
+          objectName: "cert-password"  # Replace with your password secret name in AKV
+          objectType: secret
+    tenantId: "your-tenant-id"  # Replace with your Azure tenant ID
+  secretObjects:
+    - secretName: akv-cert-secret
+      type: Opaque
+      data:
+        - objectName: "your-cert-name"
+          key: tls.pfx
+        - objectName: "cert-password"
+          key: password

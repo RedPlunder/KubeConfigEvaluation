@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vite-react-app-dynamic
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vite-react-app
+  template:
+    metadata:
+      labels:
+        app: vite-react-app
+    spec:
+      # Shared volume between InitContainer and Main Container
+      volumes:
+        - name: app-config-vol
+          emptyDir: {}
+      
+      initContainers:
+        - name: config-generator
+          image: busybox:1.36
+          # Inject K8s Env Vars here
+          env:
+            - name: CLIENT_ID
+              value: "prod-client-id-via-env"
+            - name: AUTHORITY
+              value: "https://login.microsoftonline.com/prod-tenant"
+            - name: REDIRECT_URI
+              value: "https://myapp.production.com"
+          # Script to create the JS file based on Env Vars
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "window.appConfig = {
+                clientId: '${CLIENT_ID}',
+                authority: '${AUTHORITY}',
+                redirectUri: '${REDIRECT_URI}'
+              };" > /config-out/config.js
+          volumeMounts:
+            - name: app-config-vol
+              mountPath: /config-out
+
+      containers:
+        - name: web
+          image: my-registry/vite-react-app:latest
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            # Mount the generated file from the shared volume
+            - name: app-config-vol
+              mountPath: /usr/share/nginx/html/config.js
+              subPath: config.js

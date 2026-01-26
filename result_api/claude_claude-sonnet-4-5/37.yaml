@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: gateway
+  cloud:
+    kubernetes:
+      discovery:
+        enabled: true
+        all-namespaces: false
+        service-labels:
+          discovery: enabled
+      loadbalancer:
+        mode: SERVICE
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: my-service-route
+          uri: lb://my-service
+          predicates:
+            - Path=/my-service/**
+          filters:
+            - StripPrefix=1
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway

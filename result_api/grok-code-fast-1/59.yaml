@@ -1,0 +1,54 @@
+# {root}/templates/Deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-java-service
+  labels:
+    app: test-java-service
+spec:
+  replicas: 1  # Production-ready default; adjust as needed
+  selector:
+    matchLabels:
+      app: test-java-service
+  template:
+    metadata:
+      labels:
+        app: test-java-service
+    spec:
+      containers:
+        - name: test-java-service
+          image: your-java-image:latest  # Replace with actual image
+          command:
+            - java
+            # Use Helm's split function to break the single string into separate arguments
+            {{- range split " " .Values.javaOpts }}
+            - {{ . | quote }}
+            {{- end }}
+            - -jar
+            - java_j.jar
+          ports:
+            - containerPort: 8080  # Assuming a default port; adjust for your app
+          resources:
+            requests:
+              memory: "256Mi"  # Align with -Xmx256m for production readiness
+              cpu: "100m"
+            limits:
+              memory: "512Mi"  # Prevent OOM; adjust based on needs
+              cpu: "200m"
+          securityContext:
+            runAsNonRoot: true  # Best practice for security
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+          livenessProbe:
+            httpGet:
+              path: /health  # Adjust path if your app has a health endpoint
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health  # Adjust path if your app has a health endpoint
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      restartPolicy: Always

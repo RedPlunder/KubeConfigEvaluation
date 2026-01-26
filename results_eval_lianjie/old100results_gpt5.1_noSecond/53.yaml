@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: myingress
+  namespace: default
+spec:
+  tls:
+    - hosts:
+        - mydomain.com
+      secretName: mytls
+  rules:
+    - host: mydomain.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: myservice
+                port:
+                  number: 3000

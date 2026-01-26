@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-auth
+  namespace: kube-system
+data:
+  mapRoles: |
+    # -----------------------------------------------------------------------
+    # THE FIX: Map your EC2 Bastion Role to 'system:masters' (Admin)
+    # Remove 'system:nodes' from this role's groups.
+    # -----------------------------------------------------------------------
+    - rolearn: arn:aws:iam::123456789012:role/YOUR_EC2_IAM_ROLE_NAME
+      username: ec2-job-submitter
+      groups:
+        - system:masters
+
+    # -----------------------------------------------------------------------
+    # CRITICAL: Keep your existing Worker Node Role mapping below.
+    # Do NOT delete this entry, or your nodes will go NotReady.
+    # -----------------------------------------------------------------------
+    - rolearn: arn:aws:iam::123456789012:role/YOUR_EKS_WORKER_NODE_ROLE
+      username: system:node:{{EC2PrivateDNSName}}
+      groups:
+        - system:bootstrappers
+        - system:nodes

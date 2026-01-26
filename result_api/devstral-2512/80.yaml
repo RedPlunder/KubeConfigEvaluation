@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-app
+  template:
+    metadata:
+      labels:
+        app: test-app
+    spec:
+      containers:
+      - name: test-container
+        image: nginx:latest
+        livenessProbe:
+          exec:
+            command: ["sh", "-c", "exit 1"]  # Force failure to trigger restart
+          initialDelaySeconds: 5
+          periodSeconds: 5

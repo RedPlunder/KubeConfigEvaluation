@@ -1,0 +1,14 @@
+grafana:
+  grafana.ini:
+    smtp:
+      enabled: true
+      host: smtp.sendgrid.net:587
+      user: apikey
+      password: ${SENDGRID_API_KEY}
+      from_address: "my-from-address"
+      from_name: Grafana
+      skip_verify: false
+
+  envFrom:
+    - secretRef:
+        name: grafana-secrets

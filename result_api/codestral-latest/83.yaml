@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: srsran-project-cudu
+  namespace: srsran
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: srsran-project-cudu
+  template:
+    metadata:
+      labels:
+        app: srsran-project-cudu
+    spec:
+      containers:
+      - name: srsran-cu-du
+        image: your-image:tag
+        env:
+        - name: RESTART_URL
+          value: "http://localhost:5000/restarted"
+        lifecycle:
+          postStart:
+            exec:
+              command:
+                - "/bin/sh"
+                - "-c"
+                - "curl -H 'Content-Type: application/json' -d '{\"restarted\": true}' -X POST $RESTART_URL"

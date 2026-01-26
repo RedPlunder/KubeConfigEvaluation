@@ -1,0 +1,15 @@
+{{- $auths := dict }}
+{{ range $key, $value := .Values.privateregistries }}
+   {{- $auth := printf "%s:%s" $value.username $value.token | b64enc }}
+   {{- $_ := set $auths $value.registry (dict "auth" $auth) }}
+{{ end }}
+{{- $json := dict "auths" $auths | toJson }}
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: regcred
+  namespace: {{ .Release.Namespace }}
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: {{ $json | b64enc | quote }}

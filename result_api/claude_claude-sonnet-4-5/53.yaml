@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ollama
+  namespace: default
+spec:
+  serviceName: ollama
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+    spec:
+      containers:
+      - name: ollama
+        image: your-custom-ollama:latest
+        command: ["/bin/ollama"]
+        args: ["serve"]
+        ports:
+        - containerPort: 11434
+          name: http
+        env:
+        - name: OLLAMA_HOST
+          value: "0.0.0.0:11434"
+        - name: MODELS
+          value: "llama3.2,codellama"
+        resources:
+          limits:
+            nvidia.com/gpu: "1"
+          requests:
+            nvidia.com/gpu: "1"
+        volumeMounts:
+        - name: ollama-data
+          mountPath: /root/.ollama
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - bash
+              - -c
+              - |
+                # Wait for ollama serve to be ready
+                for i in {1..60}; do
+                  if /bin/ollama ps >/dev/null 2>&1; then
+                    echo "Ollama is ready"
+                    break
+                  fi
+                  sleep 2
+                done
+                
+                # Pull models in background to avoid blocking container startup
+                (
+                  IFS=',' read -ra MODEL_ARRAY <<< "$MODELS"
+                  for model in "${MODEL_ARRAY[@]}"; do
+                    model=$(echo "$model" | xargs)
+                    echo "Pulling model: $model"
+                    /bin/ollama pull "$model" || echo "Failed to pull $model"
+                  done
+                  echo "Model pulling complete"
+                ) &
+        readinessProbe:
+          exec:
+            command:
+            - /bin/ollama
+            - ps
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          exec:
+            command:
+            - /bin/ollama
+            - ps
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      - name: fluentd
+        image: fluent/fluentd:latest
+        volumeMounts:
+        - name: fluentd-config
+          mountPath: /fluentd/etc
+      volumes:
+      - name: fluentd-config
+        configMap:
+          name: fluentd-config
+  volumeClaimTemplates:
+  - metadata:
+      name: ollama-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 50Gi

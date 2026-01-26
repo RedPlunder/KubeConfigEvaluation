@@ -1,0 +1,11 @@
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: graphql-api-direct
+  namespace: default
+spec:
+  host: graphql-api.mesh-external.example.com
+  trafficPolicy:
+    tls:
+      mode: SIMPLE
+      sni: graphql-api.mesh-external.example.com

@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"  # If buffering must remain off for streaming requirements
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "1200"     # Further increase read timeout to 20 minutes to mitigate streaming delays
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "1200"     # Further increase send timeout to 20 minutes
+    nginx.ingress.kubernetes.io/proxy-body-size: "500m"        # Set body size limit
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"         # Also disable response buffering if needed for downstream streaming
+    nginx.ingress.kubernetes.io/proxy-busy-buffers-size: "256k"  # Increase busy buffer size to handle more data in memory during streaming
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"      # Increase buffer size for headers and initial body parts
+spec:
+  rules:
+  - host: example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: service-a
+            port:
+              number: 80
+  tls:
+  - hosts:
+    - example.com
+    secretName: tls-secret

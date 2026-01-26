@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: product-ingress-simple
+  namespace: prod-namespace
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: example.com
+      http:
+        paths:
+          - path: /product/console
+            pathType: Prefix
+            backend:
+              service:
+                name: product-svc
+                port:
+                  number: 25022
+          - path: /product/static
+            pathType: Prefix
+            backend:
+              service:
+                name: product-svc
+                port:
+                  number: 25022

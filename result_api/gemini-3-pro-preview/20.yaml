@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vod-deployment
+  labels:
+    app: vod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vod
+  template:
+    metadata:
+      labels:
+        app: vod
+    spec:
+      # ---------------------------------------------------------------------
+      # FIX: Pod Level Security Context
+      # fsGroup: 1000 ensures that any volumes mounted (like emptyDir)
+      # are owned by group 1000 and writable by that group.
+      # ---------------------------------------------------------------------
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+
+      initContainers:
+      - name: glowroot-jar-init-container
+        # Placeholder for: {{ .Values.images.repository }}/{{ .Values.config.aptm.image }}
+        image: "your-registry/aptm-image:latest"
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+        command: ["cp", "/opt/tools/aptm/glowroot.jar", "/aptm"]
+        volumeMounts:
+        - name: aptm-data-glowroot
+          mountPath: /aptm
+
+      containers:
+      - name: vod-container
+        # Placeholder for: {{ .Values.images.repository }}/com.gtt.ecomp.vod.dev/vod:{{ .Values.images.vodTag }}
+        image: "your-registry/vod-app:latest"
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          # Note: runAsUser/Group are inherited from Pod level securityContext above
+        
+        command:
+        - sh
+        - -c
+        - -x
+        - |
+          echo "Copying aptm JAR..."
+          # This copy command will now succeed because the volume /opt/tools/aptm 
+          # is writable by Group 1000 (fsGroup).
+          cp /usr/local/tomcat/webapps/vod/WEB-INF/lib/hram-agent-0.13.jar /opt/tools/aptm/
+          
+          # Verify copy (optional debugging step)
+          if [ -f "/opt/tools/aptm/hram-agent-0.13.jar" ]; then
+             echo "Copy successful."
+          else
+             echo "Copy failed!"
+             exit 1
+          fi
+
+          echo "Starting Tomcat..."
+          # Placeholder for starting the application
+          # bash /mounted-config/start_tomcat.sh
+          # Sleep to keep container running for validation if script exits
+          sleep 3600
+
+        ports:
+        - containerPort: 8080 # Example port based on context
+
+        volumeMounts:
+        - name: aptm-data
+          mountPath: /opt/tools/aptm
+        - name: aptm-data-glowroot
+          mountPath: /aptm
+
+      volumes:
+      - name: aptm-data
+        emptyDir: {}
+      - name: aptm-data-glowroot
+        emptyDir: {}

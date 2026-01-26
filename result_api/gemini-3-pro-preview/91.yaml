@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: python-graceful-memory
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: graceful-python
+  template:
+    metadata:
+      labels:
+        app: graceful-python
+    spec:
+      containers:
+        - name: python-app
+          image: python:3.10-slim
+          resources:
+            limits:
+              memory: "500Mi"
+          volumeMounts:
+            - name: script-vol
+              mountPath: /app
+          command: ["python3", "/app/main.py"]
+      volumes:
+        - name: script-vol
+          configMap:
+            name: memory-manager-script

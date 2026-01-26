@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vite-env-config
+  namespace: default
+data:
+  VITE_SERVER_ADDRESS: "your-server-address-here"  # Corrected name without extra 'S'; replace with actual value, e.g., via Helm templating

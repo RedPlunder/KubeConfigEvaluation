@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: srsran-project-cudu-chart
+  namespace: srsran
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: srsran-cu-du
+  template:
+    metadata:
+      labels:
+        app: srsran-cu-du
+    spec:
+      containers:
+      - name: srsran-cu-du
+        image: your-srsran-image:latest  # Replace with your actual image
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - |
+                curl -H 'Content-Type: application/json' -d '{ "restarted": true}' -X POST http://localhost:5000/restarted
+        ports:
+        - containerPort: 5000

@@ -1,0 +1,22 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: my-apps
+  name: my-apps
+  namespace: test-systems
+  annotations:
+    haproxy.router.openshift.io/rewrite-target: /
+spec:
+  host: www.test.gov.tw
+  path: /my-apps
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  to:
+    kind: Service
+    name: my-apps
+    weight: 100
+  wildcardPolicy: None

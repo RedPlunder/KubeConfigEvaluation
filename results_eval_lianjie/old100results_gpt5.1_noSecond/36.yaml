@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: splunk-indexes-site-overrides
+  labels:
+    app.kubernetes.io/name: splunk
+    app.kubernetes.io/instance: splunk-master
+    splunk.conf-layer: site-overrides
+data:
+  indexes.conf: |
+    {{- if .Values.splunk.indexes.enableSiteOverrides }}
+    {{- include "splunk.siteOverridesIndexesConf" . | nindent 4 }}
+    {{- end }}

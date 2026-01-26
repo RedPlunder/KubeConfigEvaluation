@@ -1,0 +1,49 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-1
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: "http://check-auth.default.svc.cluster.local:1221/review/request"
+    nginx.ingress.kubernetes.io/auth-response-headers: "X-Auth-Response"
+    nginx.ingress.kubernetes.io/auth-snippet: |
+      if ($request_uri ~ ^/path1/loc1/|^/path2/loc3/) {
+        set $auth_required 1;
+      }
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      if ($auth_required = 1) {
+        more_set_headers "Access-Control-Allow-Origin: $http_origin";
+        more_set_headers "Access-Control-Allow-Credentials: true";
+        more_set_headers "Vary: Origin";
+        more_set_headers "Cookie: $http_cookie";
+      }
+      if ($upstream_http_x_auth_response = "403") {
+        return 403 "Access denied!";
+      }
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: example.com
+    http:
+      paths:
+      - path: /path1/loc1
+        pathType: Prefix
+        backend:
+          service:
+            name: page
+            port:
+              number: 80
+      - path: /path2/loc3
+        pathType: Prefix
+        backend:
+          service:
+            name: page
+            port:
+              number: 80
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: page
+            port:
+              number: 80

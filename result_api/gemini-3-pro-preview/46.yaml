@@ -1,0 +1,60 @@
+controller:
+  replicaCount: 1
+  persistence:
+    size: 1Gi
+  podSecurityContext:
+    enabled: false
+  containerSecurityContext:
+    enabled: false
+  resources:
+    limits:
+      memory: 2Gi
+  automountServiceAccountToken: true
+
+externalAccess:
+  enabled: true
+  service:
+    type: LoadBalancer
+    ports:
+      external: 9094
+  # CHANGE 1: Disable auto-discovery. 
+  # This prevents the chart from automatically picking the internal Pod IP or an unreachable LB IP.
+  autoDiscovery:
+    enabled: false
+
+broker:
+  podSecurityContext:
+    enabled: false
+  containerSecurityContext:
+    enabled: false
+  # CHANGE 2: Explicitly configure external access for the Broker component.
+  externalAccess:
+    enabled: true
+    service:
+      # Ensure the service type matches (LoadBalancer is default here if enabled globally)
+      type: LoadBalancer
+      ports:
+        external: 9094
+    # CHANGE 3: Force the broker to advertise "localhost" to the client.
+    # The client will use this hostname to connect after the initial handshake.
+    advertisedListeners:
+      - localhost
+
+sasl:
+  client:
+    users: [ "myuser" ]
+    passwords: [ "mypassword" ]
+
+rbac:
+  create: true
+
+extraConfig: |
+  deleteTopicEnable=true
+  auto.create.topics.enable=false
+  offsets.topic.replication.factor=1
+  transaction.state.log.replication.factor=1
+
+provisioning:
+  enabled: true
+  topics:
+    - name: heartBeat

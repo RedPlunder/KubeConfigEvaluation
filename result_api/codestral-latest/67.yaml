@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-conf
+  labels:
+    app: opentelemetry
+    component: otel-collector-conf
+data:
+  otel-collector-config: |
+    receivers:
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: "business-pods"
+              scrape_interval: 5s
+              metrics_path: '/actuator/prometheus'
+              static_configs:
+                - targets:
+                  - "mycoolbusinesspod-7b4f8f4c4f-lrphj.default.svc.cluster.local:8080"
+                  - "mycoolbusinesspod-7b4f8f4c4f-n7v9h.default.svc.cluster.local:8080"
+                  - "mycoolbusinesspod-7b4f8f4c4f-jght9.default.svc.cluster.local:8080"
+
+    processors:
+      batch:
+
+    exporters:
+      prometheus:
+        endpoint: "localhost:8889"
+
+    service:
+      pipelines:
+        metrics:
+          receivers: [prometheus]
+          processors: [batch]
+          exporters: [prometheus]

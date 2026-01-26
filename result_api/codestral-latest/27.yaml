@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aspnet-app
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aspnet-app
+  template:
+    metadata:
+      labels:
+        app: aspnet-app
+    spec:
+      containers:
+      - name: aspnet-app
+        image: your-aspnet-image
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+        volumeMounts:
+        - name: aspnet-https
+          mountPath: /root/.aspnet/https
+          readOnly: true
+      volumes:
+      - name: aspnet-https
+        hostPath:
+          path: /Users/your-username/AppData/Roaming/ASP.NET/Https
+          type: Directory

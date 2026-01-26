@@ -1,0 +1,28 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: wordpress
+  namespace: default
+spec:
+  chart: wordpress
+  repo: https://charts.bitnami.com/bitnami
+  targetNamespace: default
+  values:
+    wordpressPlugins: []
+    extraVolumes:
+      - name: local-plugins
+        hostPath:
+          path: /path/to/your/local/plugins
+          type: Directory
+    extraVolumeMounts:
+      - name: local-plugins
+        mountPath: /tmp/plugins
+    initContainers:
+      - name: copy-plugins
+        image: busybox
+        command: ['sh', '-c', 'cp /tmp/plugins/*.zip /opt/bitnami/wordpress/wp-content/plugins/']
+        volumeMounts:
+          - name: local-plugins
+            mountPath: /tmp/plugins
+          - name: wordpress-data
+            mountPath: /opt/bitnami/wordpress/wp-content/plugins

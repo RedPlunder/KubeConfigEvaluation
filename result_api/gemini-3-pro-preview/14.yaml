@@ -1,0 +1,218 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: build-image
+  namespace: argo-workflows
+spec:
+  serviceAccountName: argo-workflow
+  entrypoint: build-and-deploy-env3
+  arguments:
+    parameters:
+      - name: env_name
+        value: test
+      - name: aws_region
+        value: eu-west-1
+      - name: expiration_date
+        value: "2024-12-31T23:59:59Z"
+      - name: values_path
+        value: ./demo-app/helm/values.yaml
+      - name: configurations
+        value: '[{"keyPath": "global.app.main.name", "value": "updated-app"}, {"keyPath": "global.service.backend.port", "value": 8080}]'
+      - name: application_list
+        value: '[{"name": "backend", "repo_url": "org/project-demo-app.git", "branch": "demo-app", "ecr_repo": "demo-app/backend", "path_inside_repo": "backend"}, {"name": "frontend", "repo_url": "org/project-demo-app.git", "branch": "demo-app", "ecr_repo": "demo-app/frontend", "path_inside_repo": "frontend"}]'
+
+  templates:
+    - name: build-and-deploy-env3
+      dag:
+        tasks:
+          - name: build-push-app
+            template: build-push-template
+            arguments:
+              parameters:
+                - name: app
+                  value: "{{item}}"
+            withParam: "{{workflow.parameters.application_list}}"
+
+    - name: build-push-template
+      inputs:
+        parameters:
+          - name: app
+      dag:
+        tasks:
+          - name: clone-and-check
+            template: clone-and-check-template
+            arguments:
+              parameters:
+                - name: app
+                  value: "{{inputs.parameters.app}}"
+
+          - name: build-and-push
+            template: kaniko-build-template
+            arguments:
+              parameters:
+                - name: name
+                  value: "{{tasks.clone-and-check.outputs.parameters.name}}"
+                - name: image_tag
+                  value: "{{tasks.clone-and-check.outputs.parameters.image_tag}}"
+                - name: ecr_url
+                  value: "{{tasks.clone-and-check.outputs.parameters.ecr_url}}"
+                - name: ecr_repo
+                  value: "{{tasks.clone-and-check.outputs.parameters.ecr_repo}}"
+                - name: path_inside_repo
+                  value: "{{tasks.clone-and-check.outputs.parameters.path_inside_repo}}"
+              # Pass the source code artifact from the clone step to the build step
+              artifacts:
+                - name: source
+                  from: "{{tasks.clone-and-check.outputs.artifacts.source}}"
+            when: "{{tasks.clone-and-check.outputs.parameters.build_needed}} == true"
+            dependencies: [clone-and-check]
+
+          - name: debug-list-files
+            template: debug-list-files
+            arguments:
+              parameters:
+                - name: name
+                  value: "{{tasks.clone-and-check.outputs.parameters.name}}"
+                - name: path_inside_repo
+                  value: "{{tasks.clone-and-check.outputs.parameters.path_inside_repo}}"
+              # Pass the artifact here as well to verify files exist
+              artifacts:
+                - name: source
+                  from: "{{tasks.clone-and-check.outputs.artifacts.source}}"
+            dependencies: [clone-and-check]
+
+    - name: clone-and-check-template
+      inputs:
+        parameters:
+          - name: app
+      outputs:
+        parameters:
+          - name: name
+            valueFrom:
+              path: /tmp/name
+          - name: image_tag
+            valueFrom:
+              path: /tmp/image_tag
+          - name: ecr_url
+            valueFrom:
+              path: /tmp/ecr_url
+          - name: ecr_repo
+            valueFrom:
+              path: /tmp/ecr_repo
+          - name: path_inside_repo
+            valueFrom:
+              path: /tmp/path_inside_repo
+          - name: build_needed
+            valueFrom:
+              path: /tmp/build_needed
+        # Capture the workspace directory as an artifact
+        artifacts:
+          - name: source
+            path: /workspace
+      container:
+        image: bitnami/git:latest
+        command: [bash, -c]
+        args:
+          - |
+            set -e
+            apt-get update && apt-get install -y jq awscli
+
+            APP=$(echo '{{inputs.parameters.app}}' | jq -r '.name')
+            REPO_URL=$(echo '{{inputs.parameters.app}}' | jq -r '.repo_url')
+            BRANCH=$(echo '{{inputs.parameters.app}}' | jq -r '.branch')
+            ECR_REPO=$(echo '{{inputs.parameters.app}}' | jq -r '.ecr_repo')
+            PATH_INSIDE_REPO=$(echo '{{inputs.parameters.app}}' | jq -r '.path_inside_repo')
+
+            # Ensure the directory exists (mounted via volumeMounts below for scratch space)
+            mkdir -p /workspace
+
+            git clone --branch $BRANCH https://x-access-token:$ALL_REPO_ORG_ACCESS@github.com/$REPO_URL /workspace/application-$APP
+            cd /workspace/application-$APP/$PATH_INSIDE_REPO
+            ls -l
+            if [[ ! -f "Dockerfile" ]]; then
+              echo "Dockerfile not found in $PATH_INSIDE_REPO"
+              exit 1
+            fi
+
+            COMMIT_HASH=$(git rev-parse --short HEAD)
+            IMAGE_TAG="${APP}-${BRANCH}-${COMMIT_HASH}-{{workflow.parameters.env_name}}"
+
+            ECR_URL="$AWS_ACCOUNT_ID.dkr.ecr.{{workflow.parameters.aws_region}}.amazonaws.com"
+            EXISTS=$(aws ecr describe-images --repository-name $ECR_REPO --image-ids imageTag=$IMAGE_TAG 2>/dev/null || echo "not-found")
+
+            if [[ "$EXISTS" != "not-found" ]]; then
+              echo "false" > /tmp/build_needed
+            else
+              echo "true" > /tmp/build_needed
+            fi
+
+            echo "$APP" > /tmp/name
+            echo "$IMAGE_TAG" > /tmp/image_tag
+            echo "$ECR_URL" > /tmp/ecr_url
+            echo "$ECR_REPO" > /tmp/ecr_repo
+            echo "$PATH_INSIDE_REPO" > /tmp/path_inside_repo
+
+        env:
+          - name: ALL_REPO_ORG_ACCESS
+            valueFrom:
+              secretKeyRef:
+                name: github-creds
+                key: ALL_REPO_ORG_ACCESS
+          - name: AWS_ACCOUNT_ID
+            valueFrom:
+              secretKeyRef:
+                name: registry-creds
+                key: AWS_ACCOUNT_ID
+          - name: AWS_REGION
+            value: "{{workflow.parameters.aws_region}}"
+        # We keep the volume mount here to provide writable scratch space for git clone
+        volumeMounts:
+          - name: workspace
+            mountPath: /workspace
+
+    - name: debug-list-files
+      inputs:
+        parameters:
+          - name: name
+          - name: path_inside_repo
+        # Restore artifact to /workspace
+        artifacts:
+          - name: source
+            path: /workspace
+      container:
+        image: alpine:latest
+        command: [sh, -c]
+        args:
+          - ls -lR /workspace
+
+    - name: kaniko-build-template
+      inputs:
+        parameters:
+          - name: name
+          - name: image_tag
+          - name: ecr_url
+          - name: ecr_repo
+          - name: path_inside_repo
+        # Restore artifact to /workspace. 
+        # Argo automatically mounts the artifact here; no explicit volumeMount needed.
+        artifacts:
+          - name: source
+            path: /workspace
+      container:
+        image: gcr.io/kaniko-project/executor:latest
+        command:
+          - /kaniko/executor
+        args:
+          - --context=dir:///workspace/application-{{inputs.parameters.name}}/{{inputs.parameters.path_inside_repo}}
+          - --dockerfile=Dockerfile
+          - --destination={{inputs.parameters.ecr_url}}/{{inputs.parameters.ecr_repo}}:{{inputs.parameters.image_tag}}
+          - --cache=true
+          - --verbosity=debug
+        env:
+          - name: AWS_REGION
+            value: "{{workflow.parameters.aws_region}}"
+
+  # This volume provides ephemeral scratch space for the clone step only.
+  volumes:
+    - name: workspace
+      emptyDir: {}

@@ -1,0 +1,12 @@
+apiVersion: external-secrets.io/v1beta1
+kind: SecretStore
+metadata:
+  name: azure-key-vault-store
+  namespace: default  # Adjust to your namespace
+spec:
+  provider:
+    azurekv:
+      server: "https://my.vault.azure.net"  # Replace with your Key Vault URL
+      authType: ManagedIdentity
+      identityId: "cccccc-cccccc-cccccc-cccccc-cccccc"  # Replace with the Client ID (Application ID) of your user-assigned managed identity
+      # Note: For system-assigned MI, omit identityId entirely

@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wordpress-local-dev
+  labels:
+    app.kubernetes.io/name: wordpress
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: wordpress
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: wordpress
+    spec:
+      securityContext:
+        fsGroup: 1001
+        runAsUser: 1001
+      containers:
+        - name: wordpress
+          image: docker.io/bitnami/wordpress:6.6.2
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: WORDPRESS_DATABASE_HOST
+              value: "mariadb"
+            - name: WORDPRESS_DATABASE_PASSWORD
+              value: "password123"
+            # Do NOT use wordpressPlugins variable
+          ports:
+            - name: http
+              containerPort: 8080
+          volumeMounts:
+            # 1. Mount persistent data for WP Core/Uploads
+            - name: wordpress-data
+              mountPath: /bitnami/wordpress
+            # 2. Mount your LOCAL plugins folder specifically to the plugins directory
+            - name: local-plugins-folder
+              mountPath: /bitnami/wordpress/wp-content/plugins
+      volumes:
+        - name: wordpress-data
+          persistentVolumeClaim:
+            claimName: wordpress-pvc
+        # Define the HostPath volume
+        - name: local-plugins-folder
+          hostPath:
+            # CHANGE THIS to the absolute path on your host machine
+            # Example for Minikube/Linux: /home/user/my-project/plugins
+            # Example for Docker Desktop Mac: /Users/user/my-project/plugins
+            path: /path/to/your/local/unzipped/plugins
+            type: Directory

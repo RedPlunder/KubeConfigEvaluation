@@ -1,0 +1,28 @@
+# This would be part of your values.yaml for the ReportPortal Helm chart
+rabbitmq:
+  enabled: true
+  auth:
+    username: rabbitmq
+    password: "yourpassword"
+  vhosts:
+    - name: analyzer
+  exchanges:
+    - name: analyzer-default
+      type: direct
+      vhost: analyzer
+  queues:
+    - name: index_suggest_info
+      vhost: analyzer
+      durable: true
+    - name: index_suggest_info_analyzer
+      vhost: analyzer
+      durable: true
+  bindings:
+    - source: analyzer-default
+      destination: index_suggest_info
+      routing_key: index_suggest_info
+      vhost: analyzer
+    - source: analyzer-default
+      destination: index_suggest_info_analyzer
+      routing_key: index_suggest_info_analyzer
+      vhost: analyzer

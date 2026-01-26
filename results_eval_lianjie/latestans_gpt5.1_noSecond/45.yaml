@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: apisix-gateway-nodeport
+  namespace: apisix
+  labels:
+    app.kubernetes.io/name: apisix-gateway
+    app.kubernetes.io/part-of: apisix
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: apisix-gateway
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP
+      nodePort: 32080

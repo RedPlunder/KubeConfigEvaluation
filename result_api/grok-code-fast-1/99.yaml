@@ -1,0 +1,40 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ms-ingress
+  namespace: code-oss
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/add-headers: 'Cache-Control: max-age=31536000; public'
+    nginx.ingress.kubernetes.io/enable-access-log: "true"
+    nginx.ingress.kubernetes.io/enable-debug: "true"
+    nginx.ingress.kubernetes.io/proxy-buffering: "on"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/auth-url: "https://fastapi-auth.example.com/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://fastapi-auth.example.com/auth"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - example.com
+    secretName: ms-app-tls
+  rules:
+  - host: example.com
+    http:
+      paths:
+      - path: /vfb-pod-one(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: vfb-pod-one
+            port:
+              number: 8000
+      - path: /(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: vfb-pod-one
+            port:
+              number: 8000

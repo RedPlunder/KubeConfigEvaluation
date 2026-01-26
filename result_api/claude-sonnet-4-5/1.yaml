@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftp1
+  labels:
+    app: ftp1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ftp1
+  template:
+    metadata:
+      labels:
+        app: ftp1
+    spec:
+      containers:
+      - name: ftp1
+        image: your-ftp-image:tag  # Replace with your actual image
+        stdin: true
+        stdinOnce: true
+        tty: true
+        # Add your other container configurations here
+        # ports, volumeMounts, env, etc.

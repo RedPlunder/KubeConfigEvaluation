@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: myapi-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  rules:
+    - host: ""
+      http:
+        paths:
+          # Deny /base/path/v1/api/update by routing to a 404-only service
+          - path: /base/path/v1/api/update
+            pathType: Prefix
+            backend:
+              service:
+                name: not-found-backend
+                port:
+                  number: 80
+          # All other /base/path traffic goes to myapi
+          - path: /base/path(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: myapi
+                port:
+                  number: 8080

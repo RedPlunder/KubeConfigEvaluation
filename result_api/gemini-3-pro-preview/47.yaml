@@ -1,0 +1,68 @@
+# values.yaml
+controller:
+  replicaCount: 1
+  persistence:
+    size: 1Gi
+  podSecurityContext:
+    enabled: false
+  containerSecurityContext:
+    enabled: false
+  resources:
+    limits:
+      memory: 2Gi
+  automountServiceAccountToken: true
+
+broker:
+  # Ensure you have at least 1 broker replica (default is usually 1, but good to be explicit)
+  replicaCount: 1
+  podSecurityContext:
+    enabled: false
+  containerSecurityContext:
+    enabled: false
+
+externalAccess:
+  enabled: true
+  # STEP 1: Disable auto-discovery to stop Kafka from finding its internal IP
+  autoDiscovery:
+    enabled: false
+  
+  service:
+    type: LoadBalancer
+    ports:
+      external: 9094
+      
+  # STEP 2: Explicitly tell the Broker to advertise "localhost"
+  # This ensures the Metadata Request returns "localhost:9094" instead of "192.168.x.x:9094"
+  broker:
+    advertisedListeners:
+      - localhost
+    service:
+      ports:
+        external: 9094
+
+  # Controller configuration for consistency (optional if only producing/consuming)
+  controller:
+    advertisedListeners:
+      - localhost
+    service:
+      ports:
+        external: 9094
+
+sasl:
+  client:
+    users: [ "myuser" ]
+    passwords: [ "mypassword" ]
+
+rbac:
+  create: true
+
+extraConfig: |
+  deleteTopicEnable=true
+  auto.create.topics.enable=false
+  offsets.topic.replication.factor=1
+  transaction.state.log.replication.factor=1
+
+provisioning:
+  enabled: true
+  topics:
+    - name: heartBeat

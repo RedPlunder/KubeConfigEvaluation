@@ -1,0 +1,12 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: my-scaledobject-cpu
+spec:
+  scaleTargetRef:
+    name: my-deployment
+  triggers:
+    - type: cpu
+      metricType: Utilization
+      metadata:
+        value: "75"

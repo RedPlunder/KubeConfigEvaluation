@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-{{ .Values.global.branch }}
+  namespace: {{ default .Release.Namespace .Values.global.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo-{{ .Values.global.branch }}
+  template:
+    metadata:
+      labels:
+        app: mongo-{{ .Values.global.branch }}
+    spec:
+      containers:
+      - name: mongo
+        image: "{{ .Values.mongo.repository }}:{{ .Values.mongo.tag }}"
+        ports:
+        - containerPort: {{ .Values.mongo.port }}

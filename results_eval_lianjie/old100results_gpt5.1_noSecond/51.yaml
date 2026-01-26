@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secretsfilename
+  namespace: default
+  labels:
+    app: myappname
+type: Opaque
+data:
+  # base64-encoded value for the property
+  prop_from_screts: ehb0bw==  # example value

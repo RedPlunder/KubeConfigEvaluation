@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kube-prometheus-stack-values
+  namespace: monitoring
+data:
+  values.yaml: |
+    grafana:
+      extraSecretMounts:
+        - name: smtp-secret
+          secretName: grafana-secrets
+          defaultMode: 0440
+          mountPath: /etc/secrets/smtp
+          readOnly: true
+      grafana.ini:
+        smtp:
+          enabled: true
+          host: smtp.sendgrid.net:587
+          user: apikey
+          password: $__file{/etc/secrets/smtp/smtp-password}
+          from_address: "my-from-address"
+          from_name: Grafana
+          skip_verify: false

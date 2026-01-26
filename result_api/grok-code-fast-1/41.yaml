@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: emqx-ingress
+  namespace: default  # Adjust to your namespace
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP  # Ensures HTTP to backend, not HTTPS
+    nginx.ingress.kubernetes.io/websocket-services: "emqx-service"  # Explicitly enables WebSocket for the specified service
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"  # Prevents timeout on long-lived connections
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"  # Allows time for WebSocket sends
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"  # Disables buffering to support WebSocket streaming
+spec:
+  ingressClassName: nginx  # Assumes NGINX Ingress Controller is the default
+  tls:
+  - hosts:
+    - ui-dev.url.com
+    secretName: your-tls-secret  # Replace with your actual TLS secret name containing the self-signed cert
+  rules:
+  - host: ui-dev.url.com
+    http:
+      paths:
+      - path: /mqtt
+        pathType: Prefix
+        backend:
+          service:
+            name: emqx-service  # Replace with your actual EMQX service name
+            port:
+              number: 8083  # Default EMQX WebSocket port; adjust if different

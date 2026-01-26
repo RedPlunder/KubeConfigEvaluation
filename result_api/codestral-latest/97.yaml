@@ -1,0 +1,11 @@
+initContainers:
+   - name: cert-installer-env
+     image: mcr.microsoft.com/windows/servercore:ltsc2019
+     command: ["powershell.exe", "-Command"]
+     args:
+       - |
+         $pfxBytes = [System.Convert]::FromBase64String($env:PFX_CERT)
+         $pfxPath = "C:\\temp\\cert.pfx"
+         [System.IO.File]::WriteAllBytes($pfxPath, $pfxBytes)
+         $password = ConvertTo-SecureString -String "<PFX_PASSWORD>" -Force -AsPlainText
+         Import-PfxCertificate -FilePath $pfxPath -CertStoreLocation Cert:\LocalMachine\My -Password $password

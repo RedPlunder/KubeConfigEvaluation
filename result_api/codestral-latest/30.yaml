@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  annotations:
+    service.beta.kubernetes.io/oci-load-balancer-shape: "flexible"
+    service.beta.kubernetes.io/oci-load-balancer-internal: "false"
+    service.beta.kubernetes.io/oci-load-balancer-shape-flex-min: "2"
+    service.beta.kubernetes.io/oci-load-balancer-shape-flex-max: "8"
+    # Correct health check annotations
+    service.beta.kubernetes.io/oci-load-balancer-health-check-protocol: "HTTP"
+    service.beta.kubernetes.io/oci-load-balancer-health-check-port: "80"
+    service.beta.kubernetes.io/oci-load-balancer-health-check-path: "/"
+    # Optional: Add timeout and interval settings
+    service.beta.kubernetes.io/oci-load-balancer-health-check-interval: "10"
+    service.beta.kubernetes.io/oci-load-balancer-health-check-timeout: "3"
+  labels:
+    app: checklister-frontend
+spec:
+  type: LoadBalancer
+  selector:
+    app: checklister-frontend
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80

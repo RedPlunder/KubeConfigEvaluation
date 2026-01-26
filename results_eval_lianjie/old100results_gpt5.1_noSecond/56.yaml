@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-configuration-snippet
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      if ($request_uri ~* "^/base/path/v1/api/update(/|$)") {
+        return 404;
+      }
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /base/path(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: myapi
+                port:
+                  number: 8080

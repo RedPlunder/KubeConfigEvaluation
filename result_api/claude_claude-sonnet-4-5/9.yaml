@@ -1,0 +1,66 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  name: conditional-workflow
+  namespace: default
+spec:
+  serviceAccountName: "your-service-account"
+  entrypoint: mother
+  templates:
+    - name: mother
+      dag:
+        tasks:
+          - name: main-job
+            template: main-job-step
+
+          - name: optional-job-one
+            dependencies: [main-job]
+            when: "{{tasks.main-job.outputs.parameters.command}} == 'OPTION1' || {{tasks.main-job.outputs.parameters.command}} == 'BothOptions'"
+            templateRef:
+              name: master-templater
+              template: option-one-template
+            arguments:
+              parameters:
+                - name: argument-one
+                  value: "{{tasks.main-job.outputs.parameters.argument-one}}"
+                - name: argument-two
+                  value: "{{tasks.main-job.outputs.parameters.argument-two}}"
+
+          - name: optional-job-two
+            dependencies: [main-job]
+            when: "{{tasks.main-job.outputs.parameters.command}} == 'OPTION2' || {{tasks.main-job.outputs.parameters.command}} == 'BothOptions'"
+            templateRef:
+              name: master-templater
+              template: option-two-template
+            arguments:
+              parameters:
+                - name: argument-one
+                  value: "{{tasks.main-job.outputs.parameters.argument-one}}"
+                - name: argument-two
+                  value: "{{tasks.main-job.outputs.parameters.argument-two}}"
+
+          - name: optional-job-three
+            dependencies: [optional-job-one, optional-job-two]
+            when: "{{tasks.optional-job-one.status}} == Succeeded || {{tasks.optional-job-two.status}} == Succeeded"
+            templateRef:
+              name: master-templater
+              template: option-three-template
+            arguments:
+              parameters:
+                - name: argument-one
+                  value: "{{tasks.main-job.outputs.parameters.argument-one}}"
+
+    - name: main-job-step
+      container:
+        image: alpine:latest
+        command: [sh, -c]
+        args: ["echo 'Main job'; echo 'OPTION1' > /tmp/command.txt"]
+      outputs:
+        parameters:
+          - name: command
+            valueFrom:
+              path: /tmp/command.txt
+          - name: argument-one
+            value: "value1"
+          - name: argument-two
+            value: "value2"

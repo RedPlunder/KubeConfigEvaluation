@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-test
+  namespace: example-ingress-snippet
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      # Deny specific paths before they reach the backend
+      if ($request_uri ~* "^/admin(/|$)") {
+        return 403;
+      }
+      if ($request_uri ~* "^/danger-path(/|$)") {
+        return 403;
+      }
+spec:
+  rules:
+    - host: api.myhost.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: service-mapping
+                port:
+                  number: 9042

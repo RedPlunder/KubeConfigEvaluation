@@ -1,0 +1,13 @@
+apiVersion: external-secrets.io/v1beta1
+kind: SecretStore
+metadata:
+  name: azure-keyvault-store
+  namespace: default
+spec:
+  provider:
+    azurekv:
+      authType: WorkloadIdentity
+      vaultUrl: "https://my.vault.azure.net"
+      serviceAccountRef:
+        name: external-secrets
+        namespace: external-secrets

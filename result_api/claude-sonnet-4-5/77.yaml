@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: file-reader-app
+  namespace: default
+spec:
+  serviceAccountName: pod-file-reader
+  containers:
+  - name: python-app
+    image: python:3.11-slim
+    command: ["/bin/sh", "-c"]
+    args:
+      - |
+        pip install kubernetes && python /app/read_file.py
+    volumeMounts:
+    - name: script-volume
+      mountPath: /app
+  volumes:
+  - name: script-volume
+    configMap:
+      name: python-script
+  restartPolicy: Never

@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-poc-cicd
+  namespace: default
+  labels:
+    app: backend-poc-cicd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend-poc-cicd
+  template:
+    metadata:
+      labels:
+        app: backend-poc-cicd
+    spec:
+      containers:
+        - name: backend
+          image: backcicd:poc-cicd
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            # FIX: Renamed from MONGO_URL to SPRING_DATA_MONGODB_URI
+            # This ensures Spring Boot auto-configuration picks up the custom connection string.
+            - name: SPRING_DATA_MONGODB_URI
+              value: "mongodb://root:pass@mongo-poc-cicd:27017"

@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: output-all-apps
+  namespace: my-namespace
+spec:
+  project: my-project
+  source:
+    repoURL: https://gitlab.com/gitlab/repo.git
+    targetRevision: HEAD
+    path: output
+    username: my-git-username  # Replace with actual Git username
+    password: my-git-password  # Replace with actual Git password or token; for production, use secretRef instead
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: my-namespace
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

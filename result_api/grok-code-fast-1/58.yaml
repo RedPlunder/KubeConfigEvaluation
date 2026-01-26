@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-java-service
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-java-service
+  template:
+    metadata:
+      labels:
+        app: test-java-service
+    spec:
+      containers:
+      - name: test-java-service
+        image: your-java-app-image:latest  # Replace with your actual image
+        args:
+        - -Xmx256m
+        - -XX:MetaspaceSize=64m
+        - -XX:+UseSerialGC
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+        ports:
+        - containerPort: 8080  # Adjust based on your app's port
+      restartPolicy: Always

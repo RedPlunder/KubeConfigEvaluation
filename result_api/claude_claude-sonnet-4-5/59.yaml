@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-java-service
+  labels:
+    app: test-java-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-java-service
+  template:
+    metadata:
+      labels:
+        app: test-java-service
+    spec:
+      containers:
+      - name: test-java-service
+        image: your-registry/test-java-service:latest
+        command:
+          - /bin/sh
+          - -c
+          - exec java $JAVA_OPTS -jar java_j.jar
+        env:
+        - name: JAVA_OPTS
+          value: {{ .Values.JAVA_OPTS | quote }}
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"

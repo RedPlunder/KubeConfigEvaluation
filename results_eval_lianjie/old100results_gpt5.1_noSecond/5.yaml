@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sigma-service
+  namespace: default
+  labels:
+    service: sigma-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      service: sigma-service
+  template:
+    metadata:
+      labels:
+        service: sigma-service
+    spec:
+      containers:
+        - name: django
+          image: your-django-image:latest
+          ports:
+            - containerPort: 8000
+          env: []

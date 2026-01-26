@@ -1,0 +1,21 @@
+# values.yaml for ReportPortal Helm chart
+rabbitmq:
+  enabled: true
+  auth:
+    username: rabbitmq
+    password: "your-password"
+    existingSecret: "reportportal-rabbitmq"
+  extraConfig: |
+    default_vhost = analyzer
+    default_user = analyzer
+    default_pass = analyzer
+  extraSecrets:
+    analyzer:
+      password: "analyzer-password"
+  extraExchanges:
+    - name: analyzer-default
+      vhost: analyzer
+      type: direct
+      durable: true
+      autoDelete: false
+      internal: false

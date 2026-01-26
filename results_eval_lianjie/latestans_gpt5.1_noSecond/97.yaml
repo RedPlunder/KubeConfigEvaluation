@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: windows-cert-from-secret
+  namespace: default
+  labels:
+    app: windows-cert-from-secret
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: windows-cert-from-secret
+  template:
+    metadata:
+      labels:
+        app: windows-cert-from-secret
+    spec:
+      nodeSelector:
+        "kubernetes.io/os": windows
+      volumes:
+        - name: pfx-volume
+          secret:
+            secretName: windows-pfx-secret
+      containers:
+        - name: windows-app
+          image: mcr.microsoft.com/windows/servercore:ltsc2019
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: pfx-volume
+              mountPath: C:\certs
+          env:
+            - name: PFX_PATH
+              value: "C:\\certs\\mycert.pfx"
+            - name: PFX_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pfx-password-secret
+                  key: password
+          command:
+            - "powershell"
+            - "-Command"
+            - |
+              $pfxPath = $env:PFX_PATH;
+              $pfxPassword = (ConvertTo-SecureString -String $env:PFX_PASSWORD -AsPlainText -Force);
+              if (-Not (Test-Path $pfxPath)) {
+                Write-Host "PFX file not found at $pfxPath";
+                exit 1;
+              }
+              Write-Host "Importing PFX certificate from $pfxPath into LocalMachine\My store...";
+              $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2;
+              $cert.Import($pfxPath, $pfxPassword, [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::MachineKeySet);
+              $store = New-Object System.Security.Cryptography.X509Certificates.X509Store("My","LocalMachine");
+              $store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite);
+              $store.Add($cert);
+              $store.Close();
+              Write-Host "Certificate imported successfully.";
+              # Start your actual app here; for demo, just sleep
+              while ($true) { Start-Sleep -Seconds 3600 }

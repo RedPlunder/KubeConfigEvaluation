@@ -1,0 +1,4 @@
+play:
+  PORT: 1114
+  PLAY_EXPIRES_IN_MS: 600000  # Pre-calculated: 10 * 60 * 1000
+  API_URL: "https://stag.com/api"

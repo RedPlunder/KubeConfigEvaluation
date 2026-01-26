@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: http-ingress
+  annotations:
+    kubernetes.io/ingress.class: public
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  rules:
+    - http:
+        paths:
+          # mf1: root app
+          - path: /()(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: mf1
+                port:
+                  number: 80
+          # mf2: mounted under /mf2, strip /mf2
+          - path: /mf2(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: mf2
+                port:
+                  number: 80

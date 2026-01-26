@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-deployment
+  labels:
+    app: my-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+        - name: app-container
+          # Logic: Check global registry -> Check local registry -> Default
+          image: "{{ .Values.global.imageRegistry | default .Values.image.registry }}/app:{{ .Values.image.tag }}"
+          env:
+            - name: APP_ENV
+              # Logic: Check global environment -> Default to local
+              value: "{{ .Values.global.environment | default .Values.environment }}"
+            # ... other container fields

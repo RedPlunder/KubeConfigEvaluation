@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-{{ .Values.global.branch }}
+  namespace: {{ default .Release.Namespace .Values.global.namespace }}
+spec:
+  replicas: {{ .Values.backend.replicas }}
+  selector:
+    matchLabels:
+      app: backend-{{ .Values.global.branch }}
+  template:
+    metadata:
+      labels:
+        app: backend-{{ .Values.global.branch }}
+    spec:
+      containers:
+      - name: backend
+        image: "{{ .Values.backend.repository }}:{{ .Values.backend.tag }}"
+        ports:
+        - containerPort: {{ .Values.backend.port }}
+        env:
+        - name: MONGO_URL
+          value: "mongodb://root:pass@mongo-{{ .Values.global.branch }}.{{ default .Release.Namespace .Values.global.namespace }}.svc.cluster.local:{{ .Values.mongo.port }}"
+        - name: MONGO_HOST
+          value: "mongo-{{ .Values.global.branch }}.{{ default .Release.Namespace .Values.global.namespace }}.svc.cluster.local"
+        - name: MONGO_PORT
+          value: "{{ .Values.mongo.port }}"

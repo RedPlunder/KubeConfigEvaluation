@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: utilitypod
+  namespace: blah-dev
+  labels:
+    app: utilitypod
+    purpose: utility-pod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: utilitypod
+  template:
+    metadata:
+      labels:
+        app: utilitypod
+        purpose: utility-pod
+    spec:
+      containers:
+      - name: utilitypod
+        image: blahblah/utilitypod:latest
+        command: ["/bin/bash", "-c", "--"]
+        args: ["while true; do sleep 28800; done;"]
+        env:
+        - name: KUBERNETES_SERVICE_HOST
+          value: "api.dev.blah.internal"
+        - name: KUBERNETES_SERVICE_PORT
+          value: "443"

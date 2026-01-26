@@ -1,0 +1,142 @@
+airflow:
+  airflow:
+    legacyCommands: false
+    image:
+      repository: apache/airflow
+      tag: 2.8.4-python3.9
+    executor: KubernetesExecutor
+    fernetKey: "7T512UXSSmBOkpWimFHIVb8jK6lfmSAvx4mO6Arehnc"
+    webserverSecretKey: "THIS IS UNSAFE!"
+    config:
+      AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "True"
+      AIRFLOW__CORE__LOAD_EXAMPLES: "True"
+      # Parallelism settings for KubernetesExecutor
+      AIRFLOW__CORE__PARALLELISM: "50"
+      AIRFLOW__CORE__MAX_ACTIVE_TASKS_PER_DAG: "20"
+      AIRFLOW__CORE__MAX_ACTIVE_RUNS_PER_DAG: "3"
+      AIRFLOW__KUBERNETES_EXECUTOR__WORKER_PODS_CREATION_BATCH_SIZE: "10"
+    users:
+      - username: admin
+        password: admin
+        role: Admin
+        email: tom.mclean@myemail.com
+        firstName: admin
+        lastName: admin
+    connections: []
+    variables: []
+    pools: []
+    extraPipPackages: []
+    extraEnv: []
+    extraVolumeMounts: []
+    extraVolumes: []
+    kubernetesPodTemplate:
+      stringOverride: ""
+      resources: {}
+      extraPipPackages: []
+      extraVolumeMounts: []
+      extraVolumes: []
+  scheduler:
+    replicas: 1
+    resources: {}
+    logCleanup:
+      enabled: true
+      retentionMinutes: 21600
+    livenessProbe:
+      enabled: true
+    taskCreationCheck:
+      enabled: false
+      thresholdSeconds: 300
+      schedulerAgeBeforeCheck: 180
+  web:
+    replicas: 1
+    resources: {}
+    service:
+      type: ClusterIP
+      externalPort: 8080
+    webserverConfig:
+      stringOverride: |
+        from airflow import configuration as conf
+        from flask_appbuilder.security.manager import AUTH_DB
+
+        # the SQLAlchemy connection string
+        SQLALCHEMY_DATABASE_URI = conf.get("core", "SQL_ALCHEMY_CONN")
+
+        # use embedded DB for auth
+        AUTH_TYPE = AUTH_DB
+      existingSecret: ""
+
+  workers:
+    enabled: false
+
+  triggerer:
+    enabled: true
+    replicas: 1
+    resources: {}
+    capacity: 1000
+
+  flower:
+    enabled: false
+
+  logs:
+    path: /opt/airflow/logs
+    persistence:
+      enabled: false
+
+  dags:
+    path: /opt/airflow/dags
+    persistence:
+      enabled: false
+    gitSync:
+      enabled: true
+      repo: "https://tom.mclean:mypassword@dev.azure.com/MyOrg/MyOrg/_git/Airflow"
+      branch: "main"
+      revision: "HEAD"
+      syncWait: 60
+      depth: 1
+      repoSubPath: "dags"
+      cloneDepth: 1
+
+      httpSecret: "airflow-http-git-secret"
+      httpSecretUsernameKey: username
+      httpSecretPasswordKey: password
+
+  ingress:
+    enabled: true
+
+    web:
+      host: airflow.mydomain.com
+      annotations:
+        kubernetes.io/ingress.class: alb
+        alb.ingress.kubernetes.io/group.name: grafana
+        alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
+        alb.ingress.kubernetes.io/scheme: internet-facing
+        alb.ingress.kubernetes.io/ssl-redirect: '443'
+        alb.ingress.kubernetes.io/target-type: ip
+
+  serviceAccount:
+    create: true
+    name: ""
+    annotations: {}
+
+  extraManifests: []
+
+  pgbouncer:
+    enabled: true
+    resources: {}
+    authType: md5
+
+  postgresql:
+    enabled: true
+    persistence:
+      enabled: true
+      storagClass: ""
+      size: 8Gi
+
+  externalDatabase:
+    type: postgres
+
+  redis:
+    enabled: false
+
+  externalRedis:
+    host: localhost

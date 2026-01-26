@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: multi-type-deployment
+  labels:
+    app: multi-type-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: multi-type-app
+  template:
+    metadata:
+      labels:
+        app: multi-type-app
+    spec:
+      containers:
+        - name: foo
+          image: "us-docker.pkg.dev/google-samples/containers/gke/hello-app:1.0"
+          env:
+            - name: "PORT"
+              value: "50001"
+          ports:
+            - name: http-foo
+              containerPort: 50001
+        - name: bar
+          image: "us-docker.pkg.dev/google-samples/containers/gke/hello-app:2.0"
+          env:
+            - name: "PORT"
+              value: "50002"
+          ports:
+            - name: http-bar
+              containerPort: 50002
+        - name: baz
+          image: "public.ecr.aws/nginx/nginx:1.23"
+          env:
+            - name: "PORT"
+              value: "8080"
+          ports:
+            - name: http-baz
+              containerPort: 8080

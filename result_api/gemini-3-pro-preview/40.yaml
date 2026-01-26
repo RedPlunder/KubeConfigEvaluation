@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-symlink
+  namespace: default
+  labels:
+    app: my-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "my-app-role"
+        
+        # 1. Define the secret
+        vault.hashicorp.com/agent-inject-secret-database-creds: "secret/data/db"
+        
+        # 2. DO NOT set secret-volume-path. 
+        # By default, this renders the secret to /vault/secrets/database-creds
+    spec:
+      serviceAccountName: my-app-sa
+      containers:
+        - name: my-app
+          image: alpine:latest
+          # 3. Override command to link the secret into the desired path
+          # We create the link, then execute the actual application
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              # Ensure the target directory exists (if not already there)
+              mkdir -p /app/conf
+              
+              # Symlink the injected secret from /vault/secrets to /app/conf
+              ln -sf /vault/secrets/database-creds /app/conf/database.json
+              
+              # Start the actual application (replace with your app binary)
+              echo "Starting application..." && sleep 3600
+          ports:
+            - containerPort: 80

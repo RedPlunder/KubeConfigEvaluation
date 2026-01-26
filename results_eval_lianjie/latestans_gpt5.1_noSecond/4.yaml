@@ -1,0 +1,39 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-1
+  namespace: default
+  annotations:
+    # External auth endpoint (ingress-nginx will call this before proxying)
+    nginx.ingress.kubernetes.io/auth-url: "http://check-auth.default.svc.cluster.local:1221/review/request"
+
+    # Optional: send original request headers to auth service (example)
+    nginx.ingress.kubernetes.io/auth-request-redirect: "$request_uri"
+
+    # Limit auth to specific paths using NGINX logic
+    # If the request is NOT to /path1/loc1/ or /path2/loc3/, skip auth by returning 200 from auth phase.
+    nginx.ingress.kubernetes.io/auth-snippet: |
+      if ($request_uri !~ ^/path1/loc1/ && $request_uri !~ ^/path2/loc3/) {
+        return 200;
+      }
+
+    # Add CORS headers only for the protected paths
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      if ($request_uri ~ ^/path1/loc1/ || $request_uri ~ ^/path2/loc3/) {
+        more_set_headers "Vary: Origin";
+        more_set_headers "Access-Control-Allow-Credentials: true";
+        more_set_headers "Access-Control-Allow-Origin: $http_origin";
+      }
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: page
+            port:
+              number: 80

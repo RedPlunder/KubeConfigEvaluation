@@ -1,0 +1,62 @@
+# Complete, production-ready Helm values.yaml for the ArgoCD chart deployment
+# This enables the argocd-apps subchart and configures the ApplicationSet under it
+# Security note: Ensure the Git repo URL uses HTTPS and is properly secured; consider adding authentication if needed for production
+# Production readiness: The configuration includes sync policies for safety (e.g., CreateNamespace, PruneLast), but monitor for resource limits and RBAC in production
+
+argo-cd:
+  enabled: true
+  dex:
+    enabled: false
+  notifications:
+    enabled: false
+  applicationSet:
+    enabled: true
+  server:
+    extraArgs:
+      - --insecure
+  namespaceOverride: "argo-cd"
+  server:
+    service:
+      type: NodePort
+      nodePort: 32080
+
+# Enable the argocd-apps subchart to deploy ApplicationSets
+argocd-apps:
+  enabled: true
+  # Define the ApplicationSet under applicationsets
+  applicationsets:
+    - name: core
+      goTemplate: true
+      generators:
+        - git:
+            repoURL: https://mygitrepo.git
+            revision: HEAD
+            directories:
+              - path: kubernetes-deployments/core/*
+      template:
+        metadata:
+          name: '{{path.basename}}'
+          labels: {}
+        spec:
+          project: default
+          source:
+            repoURL: https://mygitrepo.git
+            targetRevision: HEAD
+            path: "{{ .path.path }}"
+            helm:
+              valueFiles:
+                - values.yaml
+          destination:
+            server: https://kubernetes.default.svc
+            namespace: "{{ base .path.path }}"
+          revisionHistoryLimit: 5
+          syncPolicy:
+            syncOptions:
+              - ApplyOutOfSyncOnly=true
+              - CreateNamespace=true
+              - RespectIgnoreDifferences=true
+              - PruneLast=true
+          ignoreDifferences: []
+      syncPolicy:
+        preserveResourcesOnDeletion: true
+        applicationsSync: sync

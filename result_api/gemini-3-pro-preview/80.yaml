@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: debug-standalone-pod
+  namespace: default
+  labels:
+    app: debug-app
+spec:
+  # Allowed for Kind: Pod
+  restartPolicy: Never
+  containers:
+    - name: app-container
+      image: nginx:latest
+      # Simulating a crash
+      command: ["/bin/sh", "-c", "echo 'Running app...'; exit 1"]
+      resources:
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
