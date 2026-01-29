@@ -1,7 +1,17 @@
 #!/bin/bash
 
-MANIFEST_DIR="./manifests"
-LOG_FILE="./auto_run_log/k8s-dry-run-$(date +%Y%m%d-%H%M%S).log"
+# 检查是否提供了目录参数
+if [ $# -ne 1 ]; then
+	echo "Error, you must and only use 1 argument"
+    echo "用法: $0 <manifests目录>"
+    exit 1
+fi
+
+MANIFEST_DIR="$1"
+DIR_NAME="${MANIFEST_DIR##*/}"
+
+mkdir -p "./logs"  # 自动创建logs目录
+LOG_FILE="./logs/$DIR_NAME-k8s-dry-run.log"
 
 # 清空或创建日志文件
 > "$LOG_FILE"
